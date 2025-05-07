@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "jsx": "react-jsx",
+      "strict": true,
+      "sourceMap": true,
+      "baseUrl": ".",
+      "paths": {
+        "@/*": ["src/*"],
+        "@frontend": ["src/frontend/*"],
+        "@backend/*": ["src/backend/*"]
+      },
+      "allowSyntheticDefaultImports": true,
+      "esModuleInterop": true  
+    },
+    "include": ["src"]
+  }
+  
