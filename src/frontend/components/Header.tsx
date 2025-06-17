@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import PatchModal from './PatchModal';
+import { useNotify } from '../hooks/useNotify';
+import Notify from './Notify';
 import useStore from '../store';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   const [showModal, setShowModal] = useState(false);
   const { folderPath, setFolderPath } = useStore();
+  const notify = useNotify();
 
   const handleSelectFolder = async () => {
     const path = await window.electronAPI.selectFolder();
     if (path) setFolderPath(path);
+  };
+
+  const handleCopyDiff = async () => {
+    const result = await window.electronAPI.copyGitDiff();
+    if (result?.success) {
+      notify.notify('✅ Git diff copied to clipboard');
+    } else {
+      notify.notify(`❌ ${result?.error ?? 'Failed to copy git diff'}`);
+    }
   };
 
   return (
@@ -30,9 +42,16 @@ export default function Header() {
         >
           Apply Patch
         </button>
+        <button
+          onClick={handleCopyDiff}
+          className="px-3 py-1 border border-neutral-300 dark:border-neutral-600 bg-transparent dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded text-sm hover:bg-neutral-200 dark:hover:bg-neutral-600"
+        >
+          Copy Diff
+        </button>
         <ThemeToggle />
       </div>
       {showModal && <PatchModal onClose={() => setShowModal(false)} />}
+      {notify.message && <Notify message={notify.message} />}
     </div>
   );
 }

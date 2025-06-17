@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readTokens:      p   => ipcRenderer.invoke('file:readTokens', p),
   copySelectedFiles: (paths, includeTree, promptType, instructions) =>
     ipcRenderer.invoke('file:copySelected', paths, includeTree, promptType, instructions),
+  copyGitDiff: () => ipcRenderer.invoke('git:copyDiff'),
   openFolderDirect: (path) => ipcRenderer.invoke('dialog:openFolderDirect', path),
   applyPatch: (patch) => ipcRenderer.invoke('applyPatch', patch),
 });

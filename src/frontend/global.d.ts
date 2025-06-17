@@ -18,6 +18,7 @@ declare global {
         promptType: string,
         instructions: string
       ) => Promise<boolean>;
+      copyGitDiff: () => Promise<{ success: boolean; diffLength?: number; error?: string }>;
       openFolderDirect: (path: string) => Promise<string | null>;
     };
   }

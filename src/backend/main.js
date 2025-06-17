@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, globalShortcut, clipboard, Menu } from 'electron';
+import { execSync } from 'child_process';
 import { create_patch, question, blank } from './prompts.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -103,6 +104,28 @@ ipcMain.handle('dialog:openFolderDirect', async (_event, folderPath) => {
     onUnlink: p => mainWindow.webContents.send('file-removed', p),
   });
   return folderPath;
+});
+
+// ------------------------------------------------------------------
+// Git Diff → Clipboard
+// ------------------------------------------------------------------
+ipcMain.handle('git:copyDiff', async () => {
+  try {
+    if (!openedFolderPath) throw new Error('No folder is currently opened');
+
+    const diff = execSync('git diff', {
+      cwd: openedFolderPath,
+      encoding: 'utf8',
+      maxBuffer: 10 * 1024 * 1024, // 10 MB
+    });
+
+    if (!diff.trim()) throw new Error('Working tree is clean – nothing to diff');
+
+    clipboard.writeText(diff);
+    return { success: true, diffLength: diff.length };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
 });
 
 // ------------------------------------------------------------------
