@@ -19,6 +19,28 @@ let openedFolderPath = null;
 
 const encoder = new Tiktoken(o200k_base);
 
+function buildMenu() {
+  const template = [
+    ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'New Window',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => {
+            createWindow();
+          },
+        },
+        { role: process.platform === 'darwin' ? 'close' : 'quit' },
+      ],
+    },
+    { role: 'editMenu' },
+    { role: 'windowMenu' },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 function createWindow() {
   if (process.platform === 'darwin') {
     const dockMenu = Menu.buildFromTemplate([
@@ -63,7 +85,10 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  buildMenu();
+});
 
 const stripContent = (content) => {
   content = content.replace(/\/\*[\s\S]*?\*\//g, '');

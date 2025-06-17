@@ -53,8 +53,7 @@
         "mac": {
             "icon": "icons/icon.icns",
             "target": [
-                "dmg",
-                "zip"
+                "dir"
             ]
         },
         "win": {
