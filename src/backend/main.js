@@ -87,6 +87,7 @@ ipcMain.handle('file:readTokens', async (_event, filePath) => {
 
 ipcMain.handle('dialog:openFolderDirect', async (_event, folderPath) => {
   const allPaths = await folderWatcher.listFiles(folderPath);
+  mainWindow.setTitle(`${path.basename(folderPath)} - Cobase`);
   const files = await Promise.all(
     allPaths.map(async (fullPath) => ({
       fullPath,
@@ -205,6 +206,7 @@ ipcMain.handle('dialog:openFolder', async () => {
   });
   if (result.canceled) return null;
   const folderPath = result.filePaths[0];
+  mainWindow.setTitle(`${path.basename(folderPath)} - Cobase`);
   const allPaths = await folderWatcher.listFiles(folderPath);
   const files = await Promise.all(
     allPaths.map(async (fullPath) => ({
