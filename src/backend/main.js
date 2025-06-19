@@ -138,11 +138,56 @@ ipcMain.handle('git:copyDiff', async () => {
   try {
     if (!openedFolderPath) throw new Error('No folder is currently opened');
 
-    const diff = execSync('git diff', {
-      cwd: openedFolderPath,
-      encoding: 'utf8',
-      maxBuffer: 10 * 1024 * 1024, // 10 MB
-    });
+    /* ------------------------------------------------------------
+     * 1. Tracked changes (same as before)
+     * ---------------------------------------------------------- */
+    let trackedDiff = '';
+    try {
+      trackedDiff = execSync('git diff', {
+        cwd: openedFolderPath,
+        encoding: 'utf8',
+        maxBuffer: 10 * 1024 * 1024,
+      });
+    } catch (e) {
+      if (e?.stdout) {
+        trackedDiff = e.stdout.toString();
+      } else {
+        throw e;
+      }
+    }
+
+    /* ------------------------------------------------------------
+     * 2. Untracked files  →  diff --no-index /dev/null <file>
+     *    (`git ls-files --others --exclude-standard` lists exactly
+     *     those paths that are new and not ignored)
+     * ---------------------------------------------------------- */
+    const untrackedFiles = execSync(
+      'git ls-files --others --exclude-standard',
+      { cwd: openedFolderPath, encoding: 'utf8' }
+    )
+      .split('\n')
+      .filter(Boolean);
+    let untrackedDiff = '';
+    for (const file of untrackedFiles) {
+      try {
+        // --no-index returns exit-code 1 when differences exist, so
+        // swallow the error and keep the captured stdout.
+        untrackedDiff += execSync(
+          `git diff --no-index -- /dev/null "${file}"`,
+          { cwd: openedFolderPath, encoding: 'utf8' }
+        );
+        console.log(`diff is: ${untrackedDiff}`)
+      } catch (e) {
+        console.log(e)
+        if (e?.stdout) {
+          untrackedDiff += e.stdout.toString();
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    const diff = trackedDiff + untrackedDiff;
 
     if (!diff.trim()) throw new Error('Working tree is clean – nothing to diff');
 
