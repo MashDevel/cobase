@@ -105,6 +105,7 @@ export default function Sidebar() {
                     node={child}
                     selected={selected}
                     toggleSelected={toggleSelected}
+                    expandAll={Boolean(search)}
                   />
                 ))}
                 {tree.files.map(f => (

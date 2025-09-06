@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -13,6 +13,7 @@ interface DirectoryProps {
   selected: Set<string>;
   toggleSelected: (id: string) => void;
   depth?: number;
+  expandAll?: boolean;
 }
 
 export default function Directory({
@@ -20,8 +21,12 @@ export default function Directory({
   selected,
   toggleSelected,
   depth = 0,
+  expandAll = false,
 }: DirectoryProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(expandAll);
+  useEffect(() => {
+    setOpen(expandAll);
+  }, [expandAll]);
   const indent = depth * 16;
 
   const descendantIds = useMemo(() => getAllFileIds(node), [node]);
@@ -78,6 +83,7 @@ export default function Directory({
               selected={selected}
               toggleSelected={toggleSelected}
               depth={depth + 1}
+              expandAll={expandAll}
             />
           ))}
           {node.files.map(f => (
