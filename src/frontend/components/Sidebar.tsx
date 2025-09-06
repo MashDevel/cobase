@@ -4,6 +4,7 @@ import { buildTree } from '../services/tree';
 import FileItem from './FileItem';
 import { Search, X } from 'lucide-react';
 import { useMemo } from 'react';
+import useResizable from '../hooks/useResizable';
 
 export default function Sidebar() {
   const files = useStore(s => s.files);
@@ -14,6 +15,13 @@ export default function Sidebar() {
   const toggleSelected = useStore(s => s.toggleSelected);
   const selectAll = useStore(s => s.selectAll);
   const clearAll = useStore(s => s.clearAll);
+  const { ref: asideRef, style: sizeStyle, handleProps } = useResizable<HTMLElement>({
+    axis: 'x',
+    initial: 320,
+    min: 220,
+    max: 600,
+    storageKey: 'sidebar-width',
+  });
   const filteredFiles = useMemo(
     () => files.filter(f => f.name.toLowerCase().includes(search.toLowerCase())),
     [files, search]
@@ -24,11 +32,14 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="w-80 border-r bg-white dark:bg-neutral-800 flex flex-col">
+    <aside
+      ref={asideRef}
+      className="border-r bg-white dark:bg-neutral-800 flex flex-col relative shrink-0"
+      style={sizeStyle}
+    >
         <div className="p-4 border-b pt-10 drag-region">
         {!folderPath ? null : (
             <div className="relative no-drag">
-            {/* search icon */}
             <Search 
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-500 dark:text-neutral-400" 
                 size={16} 
@@ -43,7 +54,6 @@ export default function Sidebar() {
                 onChange={e => setSearch(e.target.value)}
             />
 
-            {/* clear button */}
             {search && (
                 <button
                 type="button"
@@ -123,6 +133,12 @@ export default function Sidebar() {
               </div>
             )}
           </nav>
+          <div
+            className="absolute top-0 right-0 h-full w-1 cursor-col-resize no-drag"
+            onMouseDown={handleProps.onMouseDown}
+          >
+            <div className="w-full h-full bg-transparent hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40" />
+          </div>
         </>
       )}
     </aside>
