@@ -139,7 +139,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 10, y: 10 },
+    trafficLightPosition: { x: 58, y: 10 },
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

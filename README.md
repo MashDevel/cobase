@@ -155,11 +155,22 @@ npm run clean
 │  │  └─ watcher.js       # File watcher respecting .gitignore
 │  └─ frontend/
 │     ├─ main.tsx         # React entrypoint
-│     ├─ App.tsx          # Root UI layout
-│     ├─ components/      # UI components (Sidebar, Grid, Modals, etc.)
-│     ├─ hooks/           # Custom React hooks (useNotify)
-│     ├─ store.ts         # Zustand global state
-│     └─ index.css        # Tailwind base styles
+│     ├─ index.css        # Tailwind base styles
+│     ├─ hooks/           # Custom React hooks (useNotify, useResizable)
+│     ├─ components/      # Shared UI pieces (ThemeToggle, Notify)
+│     ├─ shell/           # Shell app frame, state, and registry
+│     │  ├─ ShellApp.tsx  # Root UI layout (left rail, top bar, panes)
+│     │  ├─ store.ts      # Shell-level Zustand state
+│     │  ├─ registry.tsx  # Plugin registration and commands
+│     │  ├─ LeftRail.tsx  # Plugin launcher rail
+│     │  ├─ TopBar.tsx    # Global actions (palette, folder)
+│     │  └─ CommandPalette.tsx
+│     └─ plugins/         # Feature plugins mounted by the shell
+│        ├─ explorer/     # File explorer + selection and export
+│        ├─ git/          # Git actions (copy diff)
+│        ├─ patches/      # Apply patch UI
+│        ├─ search/       # Search (WIP)
+│        └─ settings/     # Appearance and app settings
 └─ tsconfig.json          # TypeScript configuration
 ```
 

@@ -8,3 +8,7 @@
 .no-drag {
     -webkit-app-region: no-drag;
 }
+
+.darwin .titlebar-safe-left {
+    padding-left: 60px;
+}
