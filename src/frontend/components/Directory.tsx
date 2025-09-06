@@ -5,6 +5,7 @@ import {
   FolderIcon,
 } from 'lucide-react';
 import FileItem from './FileItem';
+import TreeRow from './TreeRow';
 import type { TreeNode } from '../services/tree';
 import { getAllFileIds } from '../services/tree';
 
@@ -48,31 +49,25 @@ export default function Directory({
 
   return (
     <div>
-      <div className="flex items-center mb-2" style={{ paddingLeft: indent }}>
-        <input
-          type="checkbox"
-          checked={allSelected}
-          onChange={onFolderCheck}
-          className="mr-2 form-checkbox"
-        />
-        <div
-        className="flex items-center justify-between w-full cursor-pointer select-none"
+      <TreeRow
+        indent={indent}
+        checked={allSelected}
+        onCheck={onFolderCheck}
         onClick={() => setOpen(o => !o)}
-        >
-        <div className="flex items-center">
+        left={
+          <>
             {open ? (
-            <ChevronDownIcon className="h-4 w-4 mr-1 text-neutral-500 dark:text-neutral-300" />
+              <ChevronDownIcon className="h-4 w-4 mr-1 text-neutral-500 dark:text-neutral-300" />
             ) : (
-            <ChevronRightIcon className="h-4 w-4 mr-1 text-neutral-500 dark:text-neutral-300" />
+              <ChevronRightIcon className="h-4 w-4 mr-1 text-neutral-500 dark:text-neutral-300" />
             )}
             <FolderIcon className="h-4 w-4 mr-2 text-neutral-500 dark:text-neutral-300" />
-            <span className="font-medium text-neutral-800 dark:text-neutral-200">
-            {node.name}
-            </span>
-        </div>
-        <span className="text-xs text-neutral-400 mr-2">~{node.tokens} T ∣ ~{node.lines} L</span>
-        </div>
-      </div>
+          </>
+        }
+        name={node.name}
+        nameBold
+        meta={`~${node.tokens} T ∣ ~${node.lines} L`}
+      />
 
       {open && (
         <div>
