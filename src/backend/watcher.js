@@ -2,7 +2,7 @@ import chokidar from 'chokidar';
 import fs from 'fs';
 import path from 'path';
 import ignore from 'ignore';
-import { isBinaryFileSync, isBinaryFile } from 'isbinaryfile';
+import { isBinaryFileSync, isBinaryFile } from './binary-check.js';
 
 const to_ignore = ['package-lock.json', '.env', 'node_modules', '.git', 'poetry.lock'];
 const binaryExtensions = new Set([
@@ -46,8 +46,11 @@ export class FolderWatcher {
         } else if (entry.isFile()) {
           const ext = path.extname(entry.name).slice(1).toLowerCase();
           if (binaryExtensions.has(ext)) continue;
-          const isBinary = await isBinaryFile(fullPath);
-          if (!isBinary) results.push(fullPath);
+          let binary = true;
+          try {
+            binary = await isBinaryFile(fullPath);
+          } catch {}
+          if (!binary) results.push(fullPath);
         }
       }
     }

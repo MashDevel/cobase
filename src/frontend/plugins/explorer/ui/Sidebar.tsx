@@ -2,9 +2,11 @@ import useStore from '../store'
 import Directory from './parts/Directory'
 import { buildTree } from '../services/tree'
 import FileItem from './parts/FileItem'
-import { Search, X } from 'lucide-react'
+import { Search, X, Copy } from 'lucide-react'
 import { useMemo } from 'react'
 import useResizable from '../../../hooks/useResizable'
+import { useNotify } from '../../../hooks/useNotify'
+import Notify from '../../../components/Notify'
 
 export default function Sidebar() {
   const files = useStore(s => s.files)
@@ -15,9 +17,11 @@ export default function Sidebar() {
   const toggleSelected = useStore(s => s.toggleSelected)
   const selectAll = useStore(s => s.selectAll)
   const clearAll = useStore(s => s.clearAll)
+  const copyFileTree = useStore(s => s.copyFileTree)
   const { ref: asideRef, style: sizeStyle, handleProps } = useResizable<HTMLElement>({ axis: 'x', initial: 320, min: 220, max: 600, storageKey: 'sidebar-width' })
   const filteredFiles = useMemo(() => files.filter(f => f.name.toLowerCase().includes(search.toLowerCase())), [files, search])
   const tree = useMemo(() => (folderPath ? buildTree(filteredFiles, folderPath) : null), [filteredFiles, folderPath])
+  const notify = useNotify()
 
   return (
     <aside ref={asideRef} className="border-r bg-white dark:bg-neutral-800 flex flex-col relative shrink-0 min-h-0 h-full" style={sizeStyle}>
@@ -42,6 +46,15 @@ export default function Sidebar() {
       </div>
       {folderPath && (
         <>
+          <div className="p-4 border-b">
+            <button
+              onClick={async () => { const r = await copyFileTree(); notify.notify(r.success ? 'Copied file tree' : r.error || 'Copy failed') }}
+              className="w-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 py-1 rounded text-sm flex items-center justify-center gap-2 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+            >
+              <Copy className="h-4 w-4" />
+              Copy Tree
+            </button>
+          </div>
           <div className="flex space-x-2 p-4 border-b">
             <button onClick={selectAll} className="flex-1 border border-neutral-300 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 py-1 rounded text-sm transition-colors duration-150 ease-in-out hover:bg-neutral-300 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600">Select All</button>
             <button onClick={clearAll} className="flex-1 border border-neutral-300 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 py-1 rounded text-sm transition-colors duration-150 ease-in-out hover:bg-neutral-300 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600">Deselect All</button>
@@ -63,6 +76,7 @@ export default function Sidebar() {
           <div className="absolute top-0 right-0 h-full w-1 cursor-col-resize no-drag" onMouseDown={handleProps.onMouseDown}>
             <div className="w-full h-full bg-transparent hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40" />
           </div>
+          {notify.message && <Notify message={notify.message} />}
         </>
       )}
     </aside>
