@@ -45,6 +45,21 @@ declare global {
       }
       git: {
         copyDiff: () => Promise<{ ok: boolean; data?: { diffLength: number }; error?: { code: string; message: string } }>
+        status: () => Promise<{ ok: boolean; data?: { branch: string | null; upstream: string | null; ahead: number; behind: number; detached: boolean; merging: boolean; staged: { path: string; status: string; from?: string }[]; unstaged: { path: string; status: string; from?: string }[]; untracked: { path: string; status: string }[] }; error?: { code: string; message: string } }>
+        diffFile: (path: string, staged?: boolean) => Promise<{ ok: boolean; data?: string; error?: { code: string; message: string } }>
+        stage: (paths: string[]) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        unstage: (paths: string[]) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        discard: (paths: string[]) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        commit: (message: string) => Promise<{ ok: boolean; data?: { sha: string }; error?: { code: string; message: string } }>
+        log: (params: { skip?: number; limit?: number; author?: string; grep?: string; path?: string }) => Promise<{ ok: boolean; data?: { sha: string; parents: string[]; authorName: string; authorEmail: string; date: string; subject: string }[]; error?: { code: string; message: string } }>
+        commitDetails: (sha: string) => Promise<{ ok: boolean; data?: { sha: string; parents: string[]; authorName: string; authorEmail: string; date: string; subject: string; files: { path: string; status: string; from?: string }[] }; error?: { code: string; message: string } }>
+        blame: (path: string, rev?: string) => Promise<{ ok: boolean; data?: { sha: string; author: string; content: string }[]; error?: { code: string; message: string } }>
+        branches: () => Promise<{ ok: boolean; data?: { name: string; sha: string; head: boolean; upstream: string | null; ahead: number; behind: number }[]; error?: { code: string; message: string } }>
+        branchCreate: (name: string, checkout?: boolean) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        switch: (name: string, force?: boolean) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        copyCommitPatch: (sha: string) => Promise<{ ok: boolean; data?: { length: number }; error?: { code: string; message: string } }>
+        copyRangePrompt: (from: string | null, to: string, tokenBudget?: number) => Promise<{ ok: boolean; data?: { tokens: number }; error?: { code: string; message: string } }>
+        showPatch: (sha: string, path?: string) => Promise<{ ok: boolean; data?: string; error?: { code: string; message: string } }>
       }
       patch: {
         apply: (patchText: string) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
