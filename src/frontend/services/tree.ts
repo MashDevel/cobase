@@ -1,7 +1,7 @@
 export interface FileLike {
   id: string;
   name: string;
-  path: string;
+  fullPath: string;
   tokens: number;
 }
 
@@ -12,13 +12,19 @@ export interface TreeNode {
   tokens: number;
 }
 
+function normalize(p: string) {
+  return p.replace(/\\/g, '/');
+}
+
 export function buildTree(files: FileLike[], basePath: string): TreeNode {
   const root: TreeNode = { name: '', children: [], files: [], tokens: 0 };
   files.forEach((f) => {
-    const rel = f.path.replace(basePath, '');
-    const parts = rel.split('/').filter((p) => p);
+    const base = normalize(basePath).replace(/\/$/, '');
+    const rel = normalize(f.fullPath).replace(base + '/', '');
+    const parts = rel.split('/').filter(Boolean);
+    const dirParts = parts.slice(0, -1);
     let node = root;
-    parts.forEach((part) => {
+    dirParts.forEach((part) => {
       let child = node.children.find((c) => c.name === part);
       if (!child) {
         child = { name: part, children: [], files: [], tokens: 0 };
@@ -49,9 +55,9 @@ export function getAllFileIds(node: TreeNode): string[] {
 export function buildAsciiTree(files: FileLike[], basePath: string): string {
   const tree = {} as Record<string, any>;
   files.forEach((f) => {
-    const rel = `${f.path}/${f.name}`.replace(basePath + '/', '');
-    rel
-      .split('/')
+    const base = normalize(basePath).replace(/\/$/, '');
+    const rel = normalize(f.fullPath).replace(base + '/', '');
+    rel.split('/')
       .filter(Boolean)
       .reduce((node: Record<string, any>, part: string) => (node[part] ??= {}), tree);
   });

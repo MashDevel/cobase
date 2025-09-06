@@ -5,7 +5,7 @@ const uuidv4 = () => crypto.randomUUID();
 export type FileEntry = {
   id: string;
   name: string;
-  path: string;
+  fullPath: string;
   tokens: number;
 };
 
@@ -14,7 +14,7 @@ export type State = {
   selected: Set<string>;
   search: string;
   folderPath: string | null;
-  handleInitialFiles: (list: { fullPath: string; name: string }[]) => Promise<void>;
+  handleInitialFiles: (list: { fullPath: string; name: string; tokens?: number }[]) => Promise<void>;
   handleFileAdded: (fullPath: string) => Promise<void>;
   handleFileChanged: (fullPath: string) => Promise<void>;
   handleFileRemoved: (fullPath: string) => void;
@@ -44,41 +44,39 @@ const useStore = create<State>((set, get) => ({
   folderPath: null,
 
   handleInitialFiles: async (list) => {
-    const files = await Promise.all(
-      list.map(async (f) => ({
-        id: uuidv4(),
-        name: f.name,
-        path: f.fullPath.replace(`/${f.name}`, ''),
-        tokens: await window.electronAPI.readTokens(f.fullPath),
-      }))
-    );
+    const files: FileEntry[] = list.map((f) => ({
+      id: uuidv4(),
+      name: f.name,
+      fullPath: f.fullPath,
+      tokens: typeof f.tokens === 'number' ? f.tokens : 0,
+    }));
     set({ files });
   },
 
   handleFileAdded: async (fullPath) => {
-    const name = fullPath.split('/').pop()!;
-    const tokens = await window.electronAPI.readTokens(fullPath);
-    const file = {
+    const name = fullPath.split(/[\\\/]/).pop()!;
+    const tokens = await window.electronAPI.estimateTokens(fullPath);
+    const file: FileEntry = {
       id: uuidv4(),
       name,
-      path: fullPath.replace(`/${name}`, ''),
+      fullPath,
       tokens,
     };
     set((state) => ({ files: [...state.files, file] }));
   },
 
   handleFileChanged: async (fullPath) => {
-    const tokens = await window.electronAPI.readTokens(fullPath);
+    const tokens = await window.electronAPI.estimateTokens(fullPath);
     set((state) => ({
       files: state.files.map((f) =>
-        `${f.path}/${f.name}` === fullPath ? { ...f, tokens } : f
+        f.fullPath === fullPath ? { ...f, tokens } : f
       ),
     }));
   },
 
   handleFileRemoved: (fullPath) => {
     set((state) => ({
-      files: state.files.filter((f) => `${f.path}/${f.name}` !== fullPath),
+      files: state.files.filter((f) => f.fullPath !== fullPath),
     }));
   },
 
@@ -109,21 +107,18 @@ const useStore = create<State>((set, get) => ({
     } else {
       localStorage.removeItem('lastFolderPath');
     }
-    set({ 
-      folderPath,
-      files: [],
-      selected: new Set(),
-      search: ''
-    });
+    set({ folderPath, selected: new Set(), search: '' });
   },
 
   // Initialize from last opened folder if available
   initFromLastFolder: async () => {
     const last = localStorage.getItem('lastFolderPath');
     if (!last) return;
+    get().setFolderPath(last);
+    set({ files: [], selected: new Set(), search: '' });
     const path = await window.electronAPI.openFolderDirect(last);
-    if (path) {
-      get().setFolderPath(path);
+    if (!path) {
+      get().setFolderPath(null);
     }
   },
 
@@ -162,7 +157,7 @@ const useStore = create<State>((set, get) => ({
     const { files, selected } = get();
     const selectedPaths = files
       .filter(f => selected.has(f.id))
-      .map(f => `${f.path}/${f.name}`);
+      .map(f => f.fullPath);
     return window.electronAPI.copySelectedFiles(
       selectedPaths,
       includeTree,

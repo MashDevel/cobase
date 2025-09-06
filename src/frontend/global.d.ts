@@ -5,12 +5,13 @@ declare global {
     electronAPI: {
       selectFolder: () => Promise<string[] | undefined>;
       onFilesInitial: (
-        callback: (files: { fullPath: string; name: string }[]) => void
+        callback: (files: { fullPath: string; name: string; tokens?: number }[]) => void
       ) => void;
       onFileAdded: (callback: (fullPath: string) => void) => void;
       onFileChanged: (callback: (fullPath: string) => void) => void;
       onFileRemoved: (callback: (fullPath: string) => void) => void;
-      readTokens: (path: string) => Promise<any>;
+      readTokens: (path: string) => Promise<number>;
+      estimateTokens: (path: string) => Promise<number>;
       openFile: (path: string) => Promise<void>;
       copySelectedFiles: (
         paths: string[],

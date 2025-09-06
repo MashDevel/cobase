@@ -4,7 +4,13 @@ import path from 'path';
 import ignore from 'ignore';
 import { isBinaryFileSync, isBinaryFile } from 'isbinaryfile';
 
-const to_ignore = ['package-lock.json', '.env', 'node_modules', '.git', 'poetry.lock']
+const to_ignore = ['package-lock.json', '.env', 'node_modules', '.git', 'poetry.lock'];
+const binaryExtensions = new Set([
+  'png','jpg','jpeg','gif','bmp','webp','ico','icns','pdf','zip','gz','tgz','bz2','xz','7z','rar',
+  'mp3','mp4','m4a','m4v','mov','avi','mkv','wav','flac','ogg','webm',
+  'ttf','otf','woff','woff2','eot',
+  'jar','class','o','so','dll','dylib','exe','bin','dmg','iso','img',
+]);
 
 export class FolderWatcher {
   constructor() {
@@ -39,10 +45,10 @@ export class FolderWatcher {
         if (entry.isDirectory()) {
           await walk.call(this, fullPath);
         } else if (entry.isFile()) {
+          const ext = path.extname(entry.name).slice(1).toLowerCase();
+          if (binaryExtensions.has(ext)) continue;
           const isBinary = await isBinaryFile(fullPath);
-          if (!isBinary) {
-            results.push(fullPath);
-          }
+          if (!isBinary) results.push(fullPath);
         }
       }
     }
@@ -61,7 +67,8 @@ export class FolderWatcher {
         if (!relativePath) return false;
         if (relativePath.split(path.sep)[0] === '.git') return true;
         if (this.ignorer.ignores(relativePath)) return true;
-  
+        const ext = path.extname(filePath).slice(1).toLowerCase();
+        if (binaryExtensions.has(ext)) return true;
         try {
           const stat = fs.statSync(filePath);
           if (!stat.isFile()) return false;

@@ -19,6 +19,48 @@ let openedFolderPath = null;
 
 const encoder = new Tiktoken(o200k_base);
 
+const TOKEN_ESTIMATE_THRESHOLD = 64 * 1024;
+
+async function estimateOrReadTokens(fullPath) {
+  try {
+    const stat = await fs.stat(fullPath);
+    if (stat.size <= TOKEN_ESTIMATE_THRESHOLD) {
+      const content = await fs.readFile(fullPath, 'utf8');
+      try {
+        return encoder.encode(content).length;
+      } catch (_) {
+        return Math.ceil(Buffer.byteLength(content, 'utf8') / 4);
+      }
+    }
+    return Math.ceil(stat.size / 4);
+  } catch (err) {
+    console.warn(`estimateOrReadTokens failed for ${fullPath}:`, err);
+    return 0;
+  }
+}
+
+async function filesPayloadFromPaths(allPaths) {
+  return Promise.all(
+    allPaths.map(async (fullPath) => {
+      try {
+        const tokens = await estimateOrReadTokens(fullPath);
+        return {
+          fullPath,
+          name: path.basename(fullPath),
+          tokens,
+        };
+      } catch (err) {
+        console.warn(`filesPayloadFromPaths: failed for ${fullPath}:`, err);
+        return {
+          fullPath,
+          name: path.basename(fullPath),
+          tokens: 0,
+        };
+      }
+    })
+  );
+}
+
 function buildMenu() {
   const template = [
     ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
@@ -102,33 +144,43 @@ const stripContent = (content) => {
 ipcMain.handle('file:readTokens', async (_event, filePath) => {
   try {
     let content = await fs.readFile(filePath, 'utf-8');
-    // content = stripContent(content);
-    const tokens = encoder.encode(content);
-    return tokens.length;
+    try {
+      const tokens = encoder.encode(content);
+      return tokens.length;
+    } catch (_) {
+      return Math.ceil(Buffer.byteLength(content, 'utf8') / 4);
+    }
   } catch (err) {
     console.error(`Failed to read tokens from ${filePath}:`, err);
     return 0;
   }
 });
+ipcMain.handle('file:estimateTokens', async (_event, filePath) => {
+  try {
+    return await estimateOrReadTokens(filePath);
+  } catch (err) {
+    console.error(`Failed to estimate tokens for ${filePath}:`, err);
+    return 0;
+  }
+});
 
 ipcMain.handle('dialog:openFolderDirect', async (_event, folderPath) => {
-  const allPaths = await folderWatcher.listFiles(folderPath);
-  mainWindow.setTitle(`${path.basename(folderPath)} - Cobase`);
-  const files = await Promise.all(
-    allPaths.map(async (fullPath) => ({
-      fullPath,
-      name: path.basename(fullPath),
-      tokens: await fs.readFile(fullPath, 'utf8').then(s => s.split(/\s+/).length),
-    }))
-  );
-  mainWindow.webContents.send('files:initial', files);
-  openedFolderPath = folderPath;
-  folderWatcher.start(folderPath, {
-    onAdd:    p => mainWindow.webContents.send('file-added',   p),
-    onChange: p => mainWindow.webContents.send('file-changed', p),
-    onUnlink: p => mainWindow.webContents.send('file-removed', p),
-  });
-  return folderPath;
+  try {
+    const allPaths = await folderWatcher.listFiles(folderPath);
+    mainWindow.setTitle(`${path.basename(folderPath)} - Cobase`);
+    const files = await filesPayloadFromPaths(allPaths);
+    mainWindow.webContents.send('files:initial', files);
+    openedFolderPath = folderPath;
+    folderWatcher.start(folderPath, {
+      onAdd:    p => mainWindow.webContents.send('file-added',   p),
+      onChange: p => mainWindow.webContents.send('file-changed', p),
+      onUnlink: p => mainWindow.webContents.send('file-removed', p),
+    });
+    return folderPath;
+  } catch (err) {
+    console.error('openFolderDirect failed:', err);
+    return null;
+  }
 });
 
 // ------------------------------------------------------------------
@@ -301,13 +353,7 @@ ipcMain.handle('dialog:openFolder', async () => {
   const folderPath = result.filePaths[0];
   mainWindow.setTitle(`${path.basename(folderPath)} - Cobase`);
   const allPaths = await folderWatcher.listFiles(folderPath);
-  const files = await Promise.all(
-    allPaths.map(async (fullPath) => ({
-      fullPath,
-      name: path.basename(fullPath),
-      tokens: await fs.readFile(fullPath, 'utf8').then(s => s.split(/\s+/).length),
-    }))
-  );
+  const files = await filesPayloadFromPaths(allPaths);
   mainWindow.webContents.send('files:initial', files);
   openedFolderPath = folderPath;
   folderWatcher.start(folderPath, {
