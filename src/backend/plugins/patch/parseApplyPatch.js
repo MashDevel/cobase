@@ -48,7 +48,6 @@ export function parseApplyPatch(patch) {
     }
 
     const lastOp = ops[ops.length - 1];
-    // lines after an ADD_FILE go into its .content
     if (lastOp?.type === "create") {
       const contentLine = line.startsWith(HUNK_ADD_LINE_PREFIX)
         ? line.slice(HUNK_ADD_LINE_PREFIX.length)
@@ -56,8 +55,6 @@ export function parseApplyPatch(patch) {
       lastOp.content = appendLine(lastOp.content, contentLine);
       continue;
     }
-
-    // otherwise we must be updating
     if (!lastOp || lastOp.type !== "update") {
       return null;
     }

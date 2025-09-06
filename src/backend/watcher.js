@@ -37,7 +37,6 @@ export class FolderWatcher {
         const fullPath = path.join(dir, entry.name);
         const relPath  = path.relative(folderPath, fullPath);
 
-        // never ignore root itself
         if (relPath && (relPath.split(path.sep)[0] === '.git' || this.ignorer.ignores(relPath))) {
           continue;
         }
@@ -88,7 +87,6 @@ export class FolderWatcher {
             onAdd(filePath);
           }
         } catch {
-          // Ignore unreadable files
         }
       });
     }
@@ -100,7 +98,6 @@ export class FolderWatcher {
             onChange(filePath);
           }
         } catch {
-          // Ignore unreadable files
         }
       });
     }
