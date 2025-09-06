@@ -32,7 +32,7 @@ export default function FileItem({
         </span>
       </div>
       <span className="text-xs text-neutral-400 mr-2">
-        ~{file.tokens}
+        ~{file.tokens} T ∣ ~{file.lines} L
       </span>
     </label>
   );

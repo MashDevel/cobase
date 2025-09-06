@@ -1,5 +1,3 @@
-// ./src/backend/parseApplyPatch.js
-
 export const PATCH_PREFIX         = "*** Begin Patch\n";
 export const PATCH_SUFFIX         = "\n*** End Patch";
 export const ADD_FILE_PREFIX      = "*** Add File: ";

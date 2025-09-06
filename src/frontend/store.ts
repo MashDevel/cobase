@@ -7,6 +7,7 @@ export type FileEntry = {
   name: string;
   fullPath: string;
   tokens: number;
+  lines: number;
 };
 
 export type State = {
@@ -14,7 +15,7 @@ export type State = {
   selected: Set<string>;
   search: string;
   folderPath: string | null;
-  handleInitialFiles: (list: { fullPath: string; name: string; tokens?: number }[]) => Promise<void>;
+  handleInitialFiles: (list: { fullPath: string; name: string; tokens?: number; lines?: number }[]) => Promise<void>;
   handleFileAdded: (fullPath: string) => Promise<void>;
   handleFileChanged: (fullPath: string) => Promise<void>;
   handleFileRemoved: (fullPath: string) => void;
@@ -49,27 +50,46 @@ const useStore = create<State>((set, get) => ({
       name: f.name,
       fullPath: f.fullPath,
       tokens: typeof f.tokens === 'number' ? f.tokens : 0,
+      lines: typeof f.lines === 'number' ? f.lines : 0,
     }));
     set({ files });
+    const missing = files.filter(f => f.lines === 0);
+    if (missing.length) {
+      await Promise.all(
+        missing.map(async (file) => {
+          const lines = await window.electronAPI.estimateLines(file.fullPath);
+          set((state) => ({
+            files: state.files.map((f) => (f.id === file.id ? { ...f, lines } : f)),
+          }));
+        })
+      );
+    }
   },
 
   handleFileAdded: async (fullPath) => {
     const name = fullPath.split(/[\\\/]/).pop()!;
-    const tokens = await window.electronAPI.estimateTokens(fullPath);
+    const [tokens, lines] = await Promise.all([
+      window.electronAPI.estimateTokens(fullPath),
+      window.electronAPI.estimateLines(fullPath),
+    ]);
     const file: FileEntry = {
       id: uuidv4(),
       name,
       fullPath,
       tokens,
+      lines,
     };
     set((state) => ({ files: [...state.files, file] }));
   },
 
   handleFileChanged: async (fullPath) => {
-    const tokens = await window.electronAPI.estimateTokens(fullPath);
+    const [tokens, lines] = await Promise.all([
+      window.electronAPI.estimateTokens(fullPath),
+      window.electronAPI.estimateLines(fullPath),
+    ]);
     set((state) => ({
       files: state.files.map((f) =>
-        f.fullPath === fullPath ? { ...f, tokens } : f
+        f.fullPath === fullPath ? { ...f, tokens, lines } : f
       ),
     }));
   },

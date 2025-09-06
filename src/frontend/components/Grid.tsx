@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import useStore from '../store';
 import { X as XIcon } from 'lucide-react';
-import { selectSelectedFiles, selectSelectedTotalTokens } from '../selectors';
+import { selectSelectedFiles, selectSelectedTotalTokens, selectSelectedTotalLines } from '../selectors';
 
 interface GridItemProps {
   f: any;
@@ -26,7 +26,7 @@ const GridItem = ({ f, onRemove }: GridItemProps) => {
         {f.name}
       </div>
       <div className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-        ~{f.tokens} tokens
+        ~{f.tokens} tokens ∣ ~{f.lines} lines
       </div>
     </div>
   );
@@ -35,6 +35,7 @@ const GridItem = ({ f, onRemove }: GridItemProps) => {
 export default function Grid() {
   const selectedFiles = useStore(selectSelectedFiles);
   const totalTokens = useStore(selectSelectedTotalTokens);
+  const totalLines = useStore(selectSelectedTotalLines);
   const toggleSelected = useStore(state => state.toggleSelected);
 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -52,7 +53,7 @@ export default function Grid() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center justify-between p-4 shrink-0">
         <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          {selectedFiles.length} files ∣ ~{totalTokens} tokens
+          {selectedFiles.length} files ∣ ~{totalTokens} tokens ∣ ~{totalLines} lines
         </h2>
         <div className="flex items-center space-x-2">
           <button

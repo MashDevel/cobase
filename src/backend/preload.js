@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onFileRemoved:   cb  => ipcRenderer.on('file-removed',   (_evt, p) => cb(p)),
   readTokens:      p   => ipcRenderer.invoke('file:readTokens', p),
   estimateTokens:  p   => ipcRenderer.invoke('file:estimateTokens', p),
+  estimateLines:   p   => ipcRenderer.invoke('file:estimateLines', p),
   copySelectedFiles: (paths, includeTree, promptType, instructions) =>
     ipcRenderer.invoke('file:copySelected', paths, includeTree, promptType, instructions),
   copyGitDiff: () => ipcRenderer.invoke('git:copyDiff'),

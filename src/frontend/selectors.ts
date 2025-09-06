@@ -39,3 +39,6 @@ export const selectSelectedCount = (s: State) => selectSelectedFiles(s).length;
 
 export const selectSelectedTotalTokens = (s: State) =>
   selectSelectedFiles(s).reduce((sum, f) => sum + f.tokens, 0);
+
+export const selectSelectedTotalLines = (s: State) =>
+  selectSelectedFiles(s).reduce((sum, f) => sum + f.lines, 0);

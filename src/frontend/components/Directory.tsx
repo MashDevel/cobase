@@ -70,7 +70,7 @@ export default function Directory({
             {node.name}
             </span>
         </div>
-        <span className="text-xs text-neutral-400 mr-2">~{node.tokens}</span>
+        <span className="text-xs text-neutral-400 mr-2">~{node.tokens} T ∣ ~{node.lines} L</span>
         </div>
       </div>
 

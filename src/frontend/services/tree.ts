@@ -3,6 +3,7 @@ export interface FileLike {
   name: string;
   fullPath: string;
   tokens: number;
+  lines: number;
 }
 
 export interface TreeNode {
@@ -10,6 +11,7 @@ export interface TreeNode {
   children: TreeNode[];
   files: FileLike[];
   tokens: number;
+  lines: number;
 }
 
 function normalize(p: string) {
@@ -17,7 +19,7 @@ function normalize(p: string) {
 }
 
 export function buildTree(files: FileLike[], basePath: string): TreeNode {
-  const root: TreeNode = { name: '', children: [], files: [], tokens: 0 };
+  const root: TreeNode = { name: '', children: [], files: [], tokens: 0, lines: 0 };
   files.forEach((f) => {
     const base = normalize(basePath).replace(/\/$/, '');
     const rel = normalize(f.fullPath).replace(base + '/', '');
@@ -27,7 +29,7 @@ export function buildTree(files: FileLike[], basePath: string): TreeNode {
     dirParts.forEach((part) => {
       let child = node.children.find((c) => c.name === part);
       if (!child) {
-        child = { name: part, children: [], files: [], tokens: 0 };
+        child = { name: part, children: [], files: [], tokens: 0, lines: 0 };
         node.children.push(child);
       }
       node = child;
@@ -40,7 +42,14 @@ export function buildTree(files: FileLike[], basePath: string): TreeNode {
     node.tokens = fileTokens + childrenTokens;
     return node.tokens;
   };
+  const computeLines = (node: TreeNode): number => {
+    const fileLines = node.files.reduce((sum, f) => sum + f.lines, 0);
+    const childrenLines = node.children.reduce((sum, c) => sum + computeLines(c), 0);
+    node.lines = fileLines + childrenLines;
+    return node.lines;
+  };
   computeTokens(root);
+  computeLines(root);
   return root;
 }
 

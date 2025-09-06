@@ -20,6 +20,7 @@ let openedFolderPath = null;
 const encoder = new Tiktoken(o200k_base);
 
 const TOKEN_ESTIMATE_THRESHOLD = 64 * 1024;
+const LINES_SAMPLE_THRESHOLD = 64 * 1024;
 
 async function estimateOrReadTokens(fullPath) {
   try {
@@ -39,15 +40,49 @@ async function estimateOrReadTokens(fullPath) {
   }
 }
 
+async function estimateOrReadLines(fullPath) {
+  try {
+    const stat = await fs.stat(fullPath);
+    if (stat.size <= LINES_SAMPLE_THRESHOLD) {
+      const content = await fs.readFile(fullPath, 'utf8');
+      if (!content) return 0;
+      let count = 0;
+      for (let i = 0; i < content.length; i++) if (content[i] === '\n') count++;
+      if (content.length > 0 && content[content.length - 1] !== '\n') count++;
+      return count;
+    }
+    const fh = await fs.open(fullPath, 'r');
+    try {
+      const buf = Buffer.alloc(LINES_SAMPLE_THRESHOLD);
+      const { bytesRead } = await fh.read(buf, 0, LINES_SAMPLE_THRESHOLD, 0);
+      if (!bytesRead) return 0;
+      let nl = 0;
+      for (let i = 0; i < bytesRead; i++) if (buf[i] === 10) nl++;
+      const density = nl / bytesRead;
+      const est = Math.ceil(density * stat.size);
+      return est > 0 ? est : (stat.size > 0 ? 1 : 0);
+    } finally {
+      await fh.close();
+    }
+  } catch (err) {
+    console.warn(`estimateOrReadLines failed for ${fullPath}:`, err);
+    return 0;
+  }
+}
+
 async function filesPayloadFromPaths(allPaths) {
   return Promise.all(
     allPaths.map(async (fullPath) => {
       try {
-        const tokens = await estimateOrReadTokens(fullPath);
+        const [tokens, lines] = await Promise.all([
+          estimateOrReadTokens(fullPath),
+          estimateOrReadLines(fullPath),
+        ]);
         return {
           fullPath,
           name: path.basename(fullPath),
           tokens,
+          lines,
         };
       } catch (err) {
         console.warn(`filesPayloadFromPaths: failed for ${fullPath}:`, err);
@@ -55,6 +90,7 @@ async function filesPayloadFromPaths(allPaths) {
           fullPath,
           name: path.basename(fullPath),
           tokens: 0,
+          lines: 0,
         };
       }
     })
@@ -160,6 +196,14 @@ ipcMain.handle('file:estimateTokens', async (_event, filePath) => {
     return await estimateOrReadTokens(filePath);
   } catch (err) {
     console.error(`Failed to estimate tokens for ${filePath}:`, err);
+    return 0;
+  }
+});
+ipcMain.handle('file:estimateLines', async (_event, filePath) => {
+  try {
+    return await estimateOrReadLines(filePath);
+  } catch (err) {
+    console.error(`Failed to estimate lines for ${filePath}:`, err);
     return 0;
   }
 });
