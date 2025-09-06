@@ -9,18 +9,19 @@ import { Copy } from 'lucide-react';
 export default function Header() {
   const [showModal, setShowModal] = useState(false);
 
-  const folderPath   = useStore(s => s.folderPath);
-  const setFolderPath = useStore(s => s.setFolderPath);
-  const files         = useStore(s => s.files);
+  const folderPath = useStore(s => s.folderPath);
+  const files = useStore(s => s.files);
+  const selectFolder = useStore(s => s.selectFolder);
+  const copyGitDiff = useStore(s => s.copyGitDiff);
+  const copyFileTree = useStore(s => s.copyFileTree);
   const notify = useNotify();
 
   const handleSelectFolder = async () => {
-    const path = await window.electronAPI.selectFolder();
-    if (path) setFolderPath(path);
+    await selectFolder();
   };
 
   const handleCopyDiff = async () => {
-    const result = await window.electronAPI.copyGitDiff();
+    const result = await copyGitDiff();
     if (result?.success) {
       notify.notify('✅ Git diff copied to clipboard');
     } else {
@@ -30,33 +31,11 @@ export default function Header() {
 
   // Copy an ASCII file-tree of the current project to the clipboard
   const handleCopyTree = async () => {
-    if (!folderPath || files.length === 0) {
-      notify.notify('❌ Nothing to copy');
-      return;
-    }
-
-    const tree = {};
-    files.forEach(f => {
-      const rel = `${f.path}/${f.name}`.replace(folderPath + '/', '');
-      rel.split('/').filter(Boolean).reduce((node, part) =>
-        node[part] ??= {}, tree);
-    });
-
-    const lines: string[] = [];
-    const walk = (node, prefix = '') => {
-      Object.keys(node).sort().forEach((name, i, arr) => {
-        const last = i === arr.length - 1;
-        lines.push(`${prefix}${last ? '└─ ' : '├─ '}${name}`);
-        walk(node[name], prefix + (last ? '   ' : '│  '));
-      });
-    };
-    walk(tree);
-
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
+    const result = await copyFileTree();
+    if (result.success) {
       notify.notify('✅ File tree copied');
-    } catch {
-      notify.notify('❌ Clipboard write failed');
+    } else {
+      notify.notify(`❌ ${result.error ?? 'Clipboard write failed'}`);
     }
   };
 

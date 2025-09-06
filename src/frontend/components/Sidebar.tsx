@@ -1,32 +1,27 @@
 import useStore from '../store';
-import Directory, { buildTree } from './Directory';
+import Directory from './Directory';
+import { buildTree } from '../services/tree';
 import FileItem from './FileItem';
 import { Search, X } from 'lucide-react';
+import { useMemo } from 'react';
 
 export default function Sidebar() {
-  const {
-    files,
-    selected,
-    search,
-    folderPath,
-    setSearch,
-    setFolderPath,
-    toggleSelected,
-    selectAll,
-    clearAll,
-  } = useStore();
-
-  const filtered = files.filter(f =>
-    f.name.toLowerCase().includes(search.toLowerCase()),
+  const files = useStore(s => s.files);
+  const selected = useStore(s => s.selected);
+  const search = useStore(s => s.search);
+  const folderPath = useStore(s => s.folderPath);
+  const setSearch = useStore(s => s.setSearch);
+  const toggleSelected = useStore(s => s.toggleSelected);
+  const selectAll = useStore(s => s.selectAll);
+  const clearAll = useStore(s => s.clearAll);
+  const filteredFiles = useMemo(
+    () => files.filter(f => f.name.toLowerCase().includes(search.toLowerCase())),
+    [files, search]
   );
-  const tree = folderPath
-    ? buildTree(filtered, folderPath)
-    : null;
-
-  const handleSelectFolder = async () => {
-    const path = await window.electronAPI.selectFolder();
-    if (path) setFolderPath(path);
-  };
+  const tree = useMemo(
+    () => (folderPath ? buildTree(filteredFiles, folderPath) : null),
+    [filteredFiles, folderPath]
+  );
 
   return (
     <aside className="w-80 border-r bg-white dark:bg-neutral-800 flex flex-col">

@@ -1,5 +1,5 @@
 import { FileIcon } from 'lucide-react';
-import { File } from './Directory';
+import type { FileEntry as File } from '../store';
 
 interface FileItemProps {
   file: File;

@@ -8,14 +8,7 @@ import ExportBar from './components/ExportBar';
 export default function App() {
 
   useEffect(() => {
-    const last = localStorage.getItem('lastFolderPath');
-    if (last) {
-      window.electronAPI.openFolderDirect(last).then(path => {
-        if (path) {
-          useStore.getState().setFolderPath(path);
-        }
-      });
-    }
+    useStore.getState().initFromLastFolder();
   }, []);
 
   return (

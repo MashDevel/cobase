@@ -5,55 +5,8 @@ import {
   FolderIcon,
 } from 'lucide-react';
 import FileItem from './FileItem';
-
-export interface File {
-  id: string;
-  name: string;
-  path: string;
-  tokens: number;
-}
-
-interface TreeNode {
-  name: string;
-  children: TreeNode[];
-  files: File[];
-  tokens: number;
-}
-
-export function buildTree(files: File[], basePath: string): TreeNode {
-  const root: TreeNode = { name: '', children: [], files: [], tokens: 0 };
-  files.forEach(f => {
-    const rel = f.path.replace(basePath, '');
-    const parts = rel.split('/').filter(p => p);
-    let node = root;
-    parts.forEach(part => {
-      let child = node.children.find(c => c.name === part);
-      if (!child) {
-        child = { name: part, children: [], files: [], tokens: 0 };
-        node.children.push(child);
-      }
-      node = child;
-    });
-    node.files.push(f);
-  });
-  const computeTokens = (node: TreeNode): number => {
-    const fileTokens = node.files.reduce((sum, f) => sum + f.tokens, 0);
-    const childrenTokens = node.children.reduce((sum, c) => sum + computeTokens(c), 0);
-    node.tokens = fileTokens + childrenTokens;
-    return node.tokens;
-  };
-
-  computeTokens(root);
-  return root;
-}
-
-function getAllFileIds(node: TreeNode): string[] {
-  let ids = node.files.map(f => f.id);
-  node.children.forEach(c => {
-    ids = ids.concat(getAllFileIds(c));
-  });
-  return ids;
-}
+import type { TreeNode } from '../services/tree';
+import { getAllFileIds } from '../services/tree';
 
 interface DirectoryProps {
   node: TreeNode;

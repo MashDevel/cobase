@@ -1,14 +1,15 @@
 import { create } from 'zustand';
+import { buildAsciiTree } from './services/tree';
 const uuidv4 = () => crypto.randomUUID();
 
-type FileEntry = {
+export type FileEntry = {
   id: string;
   name: string;
   path: string;
   tokens: number;
 };
 
-type State = {
+export type State = {
   files: FileEntry[];
   selected: Set<string>;
   search: string;
@@ -17,11 +18,23 @@ type State = {
   handleFileAdded: (fullPath: string) => Promise<void>;
   handleFileChanged: (fullPath: string) => Promise<void>;
   handleFileRemoved: (fullPath: string) => void;
+  // selection + filters
   toggleSelected: (id: string) => void;
   selectAll: () => void;
   clearAll: () => void;
   setSearch: (search: string) => void;
   setFolderPath: (path: string | null) => void;
+  // app actions
+  initFromLastFolder: () => Promise<void>;
+  selectFolder: () => Promise<void>;
+  copyGitDiff: () => Promise<{ success: boolean; diffLength?: number; error?: string }>;
+  copyFileTree: () => Promise<{ success: boolean; error?: string }>;
+  copySelectedFiles: (
+    includeTree: boolean,
+    promptType: string,
+    instructions: string
+  ) => Promise<boolean>;
+  applyPatch: (patchText: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 const useStore = create<State>((set, get) => ({
@@ -103,9 +116,72 @@ const useStore = create<State>((set, get) => ({
       search: ''
     });
   },
+
+  // Initialize from last opened folder if available
+  initFromLastFolder: async () => {
+    const last = localStorage.getItem('lastFolderPath');
+    if (!last) return;
+    const path = await window.electronAPI.openFolderDirect(last);
+    if (path) {
+      get().setFolderPath(path);
+    }
+  },
+
+  // Show folder picker and set folder path
+  selectFolder: async () => {
+    const picked: any = await window.electronAPI.selectFolder();
+    const selectedPath: string | undefined = Array.isArray(picked) ? picked[0] : picked;
+    if (selectedPath) {
+      get().setFolderPath(selectedPath);
+    }
+  },
+
+  // Copy current git diff via backend
+  copyGitDiff: async () => {
+    const result = await window.electronAPI.copyGitDiff();
+    return result;
+  },
+
+  // Build ASCII tree from current files and copy to clipboard
+  copyFileTree: async () => {
+    const { files, folderPath } = get();
+    if (!folderPath || files.length === 0) {
+      return { success: false, error: 'Nothing to copy' };
+    }
+    try {
+      const text = buildAsciiTree(files, folderPath);
+      await navigator.clipboard.writeText(text);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e?.message ?? 'Clipboard write failed' };
+    }
+  },
+
+  // Copy selected files via backend with options
+  copySelectedFiles: async (includeTree, promptType, instructions) => {
+    const { files, selected } = get();
+    const selectedPaths = files
+      .filter(f => selected.has(f.id))
+      .map(f => `${f.path}/${f.name}`);
+    return window.electronAPI.copySelectedFiles(
+      selectedPaths,
+      includeTree,
+      promptType,
+      instructions,
+    );
+  },
+
+  // Apply a unified patch via backend
+  applyPatch: async (patchText) => {
+    const result = await window.electronAPI.applyPatch(patchText as any);
+    return result;
+  },
 }));
 
+let listenersSetup = false;
 const setupListeners = () => {
+  if (listenersSetup) return;
+  listenersSetup = true;
   const {
     handleInitialFiles,
     handleFileAdded,

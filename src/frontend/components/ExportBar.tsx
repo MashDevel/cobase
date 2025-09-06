@@ -3,30 +3,30 @@ import useStore from '../store';
 import { useNotify } from '../hooks/useNotify';
 import Notify from './Notify';
 import { Copy, X } from 'lucide-react';
+import { selectSelectedFiles, selectSelectedCount } from '../selectors';
 
 export default function ExportBar() {
-  const { files, selected } = useStore();
-  const selectedFiles = files.filter(f => selected.has(f.id));
+  const selectedFiles = useStore(selectSelectedFiles);
+  const selectedCount = useStore(selectSelectedCount);
+  const copySelectedFiles = useStore(s => s.copySelectedFiles);
   const notify = useNotify();
   const [includeTree, setIncludeTree] = useState(false);
   const [instructions, setInstructions] = useState('');
   const [promptType, setPromptType] = useState('Blank');
 
   const handleCopy = () => {
-    const paths = selectedFiles.map(f => `${f.path}/${f.name}`);
-    window.electronAPI.copySelectedFiles(paths, includeTree, promptType, instructions)
-      .then(success => {
-        if (!success) {
-          console.error('Failed to copy files');
-        } else {
-          notify.notify(
-            `✅ Copied ${selectedFiles.length} files` +
-              (includeTree ? ' with file tree' : '') +
-              ` as ${promptType.toLowerCase()} prompt` +
-              (instructions.trim() ? ' with instructions' : '')
-          );
-        }
-      });
+    copySelectedFiles(includeTree, promptType, instructions).then(success => {
+      if (!success) {
+        console.error('Failed to copy files');
+      } else {
+        notify.notify(
+          `✅ Copied ${selectedFiles.length} files` +
+            (includeTree ? ' with file tree' : '') +
+            ` as ${promptType.toLowerCase()} prompt` +
+            (instructions.trim() ? ' with instructions' : '')
+        );
+      }
+    });
   };
 
   return (
@@ -75,15 +75,15 @@ export default function ExportBar() {
         </div>
         <button
           onClick={handleCopy}
-          disabled={selectedFiles.length === 0}
+          disabled={selectedCount === 0}
           className={`${
-            selectedFiles.length === 0
+            selectedCount === 0
               ? 'bg-blue-300 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700'
           } text-white font-medium py-2 px-6 rounded flex items-center gap-2`}
         >
           <Copy className="h-5 w-5" />
-          Copy ({selectedFiles.length} files)
+          Copy ({selectedCount} files)
         </button>
       </div>
       {notify.message && <Notify message={notify.message} />}

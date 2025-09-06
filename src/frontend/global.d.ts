@@ -20,6 +20,7 @@ declare global {
       ) => Promise<boolean>;
       copyGitDiff: () => Promise<{ success: boolean; diffLength?: number; error?: string }>;
       openFolderDirect: (path: string) => Promise<string | null>;
+      applyPatch: (patchText: string) => Promise<{ success: boolean; error?: string }>;
     };
   }
 }

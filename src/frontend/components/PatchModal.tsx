@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X as XIcon, Copy as CopyIcon } from 'lucide-react';
 import { useNotify } from '../hooks/useNotify';
 import Notify from './Notify';
+import useStore from '../store';
 
 interface PatchModalProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ export default function PatchModal({ onClose }: PatchModalProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [patchText, setPatchText] = useState('');
   const notify = useNotify();
+  const applyPatch = useStore(s => s.applyPatch);
   const handleCopyError = async () => {
     if (errorMessage) {
       await navigator.clipboard.writeText(errorMessage);
@@ -18,7 +20,7 @@ export default function PatchModal({ onClose }: PatchModalProps) {
     }
   };
   const handleApply = async () => {
-    const result = await window.electronAPI.applyPatch(patchText);
+    const result = await applyPatch(patchText);
     if (result?.success) {
       onClose();
     } else {

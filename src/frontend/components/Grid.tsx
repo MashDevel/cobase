@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import useStore from '../store';
 import { X as XIcon } from 'lucide-react';
+import { selectSelectedFiles, selectSelectedTotalTokens } from '../selectors';
 
 interface GridItemProps {
   f: any;
@@ -32,26 +33,17 @@ const GridItem = ({ f, onRemove }: GridItemProps) => {
 };
 
 export default function Grid() {
-  const { files, selected } = useStore();
+  const selectedFiles = useStore(selectSelectedFiles);
+  const totalTokens = useStore(selectSelectedTotalTokens);
   const toggleSelected = useStore(state => state.toggleSelected);
 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
-  const selectedFiles = useMemo(
-    () => files.filter(f => selected.has(f.id)),
-    [files, selected]
-  );
 
   const sortedFiles = useMemo(() => {
     return [...selectedFiles].sort((a, b) =>
       sortOrder === 'desc' ? b.tokens - a.tokens : a.tokens - b.tokens
     );
   }, [selectedFiles, sortOrder]);
-
-  const totalTokens = useMemo(
-    () => selectedFiles.reduce((sum, f) => sum + f.tokens, 0),
-    [selectedFiles]
-  );
 
   const toggleSort = () =>
     setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'));
