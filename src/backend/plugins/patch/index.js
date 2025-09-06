@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import path from 'path'
-import { readFileSync, writeFileSync, unlinkSync } from 'fs'
+import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs'
 import { process_patch } from './applyPatch.js'
 
 export function registerPatch(ctx) {
@@ -12,7 +12,12 @@ export function registerPatch(ctx) {
       const result = process_patch(
         patchText,
         p => readFileSync(resolvePath(p), 'utf8'),
-        (p, content) => writeFileSync(resolvePath(p), content, 'utf8'),
+        (p, content) => {
+          const full = resolvePath(p)
+          const dir = path.dirname(full)
+          mkdirSync(dir, { recursive: true })
+          writeFileSync(full, content, 'utf8')
+        },
         p => unlinkSync(resolvePath(p))
       )
       return { success: true, result }

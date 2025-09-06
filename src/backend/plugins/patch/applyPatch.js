@@ -5,6 +5,7 @@ import {
   DELETE_FILE_PREFIX,
   END_OF_FILE_PREFIX,
   MOVE_FILE_TO_PREFIX,
+  MOVE_TO_PREFIX,
   PATCH_SUFFIX,
   UPDATE_FILE_PREFIX,
   HUNK_ADD_LINE_PREFIX,
@@ -72,10 +73,12 @@ class Parser {
     if (this.index >= this.lines.length) {
       throw new DiffError(`Reached end of patch unexpectedly. Make sure your patch is correctly terminated with '*** End Patch'`);
     }
-    if (this.lines[this.index].startsWith(prefix)) {
+    const prefixes = Array.isArray(prefix) ? prefix : [prefix];
+    const matched = prefixes.find(p => this.lines[this.index].startsWith(p));
+    if (matched !== undefined) {
       const text = returnEverything
         ? this.lines[this.index]
-        : this.lines[this.index].slice(prefix.length);
+        : this.lines[this.index].slice(matched.length);
       this.index += 1;
       return text;
     }
@@ -89,10 +92,7 @@ class Parser {
         if (this.patch.actions[p]) {
           throw new DiffError(`Update File Error: Duplicate Path: ${p}. Remove the duplicate '*** Update File: ${p}' entry.`);
         }
-        const moveTo = this.read_str(MOVE_FILE_TO_PREFIX);
-        if (!(p in this.current_files)) {
-          throw new DiffError(`Update File Error: Missing File: ${p}. This file must be loaded and exist before updating.`);
-        }
+        const moveTo = this.read_str([MOVE_FILE_TO_PREFIX, MOVE_TO_PREFIX]);
         const text = this.current_files[p] || "";
         const action = this.parse_update_file(text);
         action.move_path = moveTo || undefined;
@@ -104,9 +104,6 @@ class Parser {
       if (p) {
         if (this.patch.actions[p]) {
           throw new DiffError(`Delete File Error: Duplicate Path: ${p}. Remove the duplicate '*** Delete File: ${p}' entry.`);
-        }
-        if (!(p in this.current_files)) {
-          throw new DiffError(`Delete File Error: Missing File: ${p}. Ensure this file exists before attempting to delete it.`);
         }
         this.patch.actions[p] = { type: ActionType.DELETE, chunks: [] };
         continue;
@@ -535,15 +532,31 @@ export function apply_commit(commit, writeFn, removeFn) {
   }
 }
 
+function split_patch_blocks(text) {
+  const blocks = [];
+  let start = text.indexOf(PATCH_PREFIX);
+  while (start !== -1) {
+    const end = text.indexOf(PATCH_SUFFIX, start + PATCH_PREFIX.length);
+    if (end === -1) break;
+    const block = text.slice(start, end + PATCH_SUFFIX.length);
+    blocks.push(block);
+    start = text.indexOf(PATCH_PREFIX, end + PATCH_SUFFIX.length);
+  }
+  return blocks;
+}
+
 export function process_patch(text, openFn, writeFn, removeFn) {
-  if (!text.startsWith(PATCH_PREFIX)) {
+  const blocks = split_patch_blocks(text);
+  if (!blocks.length) {
     throw new DiffError("Patch must start with '*** Begin Patch'.");
   }
-  const paths = identify_files_needed(text);
-  const orig = load_files(paths, openFn);
-  const [patch, _fuzz] = text_to_patch(text, orig);
-  const commit = patch_to_commit(patch, orig);
-  apply_commit(commit, writeFn, removeFn);
+  for (const block of blocks) {
+    const paths = identify_files_needed(block);
+    const orig = load_files(paths, openFn);
+    const [patch, _fuzz] = text_to_patch(block, orig);
+    const commit = patch_to_commit(patch, orig);
+    apply_commit(commit, writeFn, removeFn);
+  }
   return "Done!";
 }
 

@@ -4,6 +4,7 @@ export const ADD_FILE_PREFIX      = "*** Add File: ";
 export const DELETE_FILE_PREFIX   = "*** Delete File: ";
 export const UPDATE_FILE_PREFIX   = "*** Update File: ";
 export const MOVE_FILE_TO_PREFIX  = "*** Move File To: ";
+export const MOVE_TO_PREFIX       = "*** Move to: ";
 export const END_OF_FILE_PREFIX   = "*** End of File";
 export const HUNK_ADD_LINE_PREFIX = "+";
 
@@ -54,6 +55,16 @@ export function parseApplyPatch(patch) {
         : line;
       lastOp.content = appendLine(lastOp.content, contentLine);
       continue;
+    }
+    if (lastOp?.type === "update") {
+      if (line.startsWith(MOVE_TO_PREFIX)) {
+        lastOp.move_path = line.slice(MOVE_TO_PREFIX.length).trim();
+        continue;
+      }
+      if (line.startsWith(MOVE_FILE_TO_PREFIX)) {
+        lastOp.move_path = line.slice(MOVE_FILE_TO_PREFIX.length).trim();
+        continue;
+      }
     }
     if (!lastOp || lastOp.type !== "update") {
       return null;
