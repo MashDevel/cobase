@@ -141,4 +141,36 @@ contextBridge.exposeInMainWorld('api', {
       return { ok: false, error: { code: 'SEARCH_FAILED', message: res?.error || 'Unknown error' } }
     },
   },
+  terminal: {
+    create: async () => {
+      const res = await ipcRenderer.invoke('terminal:create')
+      if (res?.success) return { ok: true, data: res.data }
+      return { ok: false, error: { code: 'TERMINAL_CREATE_FAILED', message: res?.error || 'Unknown error' } }
+    },
+    write: async (id, data) => {
+      const res = await ipcRenderer.invoke('terminal:write', { id, data })
+      if (res?.success) return { ok: true, data: true }
+      return { ok: false, error: { code: 'TERMINAL_WRITE_FAILED', message: res?.error || 'Unknown error' } }
+    },
+    resize: async (id, cols, rows) => {
+      const res = await ipcRenderer.invoke('terminal:resize', { id, cols, rows })
+      if (res?.success) return { ok: true, data: true }
+      return { ok: false, error: { code: 'TERMINAL_RESIZE_FAILED', message: res?.error || 'Unknown error' } }
+    },
+    kill: async (id) => {
+      const res = await ipcRenderer.invoke('terminal:kill', { id })
+      if (res?.success) return { ok: true, data: true }
+      return { ok: false, error: { code: 'TERMINAL_KILL_FAILED', message: res?.error || 'Unknown error' } }
+    },
+    onData: (cb) => {
+      const listener = (_evt, payload) => cb(payload)
+      ipcRenderer.on('terminal:data', listener)
+      return () => ipcRenderer.removeListener('terminal:data', listener)
+    },
+    onExit: (cb) => {
+      const listener = (_evt, payload) => cb(payload)
+      ipcRenderer.on('terminal:exit', listener)
+      return () => ipcRenderer.removeListener('terminal:exit', listener)
+    },
+  },
 })

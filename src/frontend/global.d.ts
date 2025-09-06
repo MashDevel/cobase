@@ -70,6 +70,14 @@ declare global {
           options?: { regex?: boolean; caseSensitive?: boolean; word?: boolean; perFile?: number; maxResults?: number }
         ) => Promise<{ ok: boolean; data?: { path: string; line: number; preview: string; ranges: [number, number][] }[]; error?: { code: string; message: string } }>
       }
+      terminal: {
+        create: () => Promise<{ ok: boolean; data?: { id: string }; error?: { code: string; message: string } }>
+        write: (id: string, data: string) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        resize: (id: string, cols: number, rows: number) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        kill: (id: string) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
+        onData: (cb: (payload: { id: string; data: string }) => void) => () => void
+        onExit: (cb: (payload: { id: string; exitCode?: number; signal?: number }) => void) => () => void
+      }
     }
   }
 }

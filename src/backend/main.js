@@ -8,6 +8,7 @@ import { registerFs } from './plugins/fs/index.js'
 import { registerGit } from './plugins/git/index.js'
 import { registerPatch } from './plugins/patch/index.js'
 import { registerSearch } from './plugins/search/index.js'
+import { registerTerminal } from './plugins/terminal/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -90,6 +91,7 @@ app.whenReady().then(() => {
   registerGit(ctx)
   registerPatch(ctx)
   registerSearch(ctx)
+  registerTerminal(ctx)
 })
 
 app.on('window-all-closed', () => {

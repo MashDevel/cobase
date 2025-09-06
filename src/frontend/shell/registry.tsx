@@ -5,6 +5,7 @@ import GitPlugin from '../plugins/git'
 import PatchesPlugin from '../plugins/patches'
 import SearchPlugin from '../plugins/search'
 import SettingsPlugin from '../plugins/settings'
+import TerminalPlugin from '../plugins/terminal'
 
 export const plugins: PluginModule[] = [
   ExplorerPlugin,
@@ -12,6 +13,7 @@ export const plugins: PluginModule[] = [
   PatchesPlugin,
   SearchPlugin,
   SettingsPlugin,
+  TerminalPlugin,
 ]
 
 export const pluginsById = Object.fromEntries(plugins.map(p => [p.manifest.id, p])) as Record<string, PluginModule>
