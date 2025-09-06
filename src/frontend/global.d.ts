@@ -64,6 +64,12 @@ declare global {
       patch: {
         apply: (patchText: string) => Promise<{ ok: boolean; data?: true; error?: { code: string; message: string } }>
       }
+      search: {
+        run: (
+          query: string,
+          options?: { regex?: boolean; caseSensitive?: boolean; word?: boolean; perFile?: number; maxResults?: number }
+        ) => Promise<{ ok: boolean; data?: { path: string; line: number; preview: string; ranges: [number, number][] }[]; error?: { code: string; message: string } }>
+      }
     }
   }
 }

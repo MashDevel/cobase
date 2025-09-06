@@ -134,4 +134,11 @@ contextBridge.exposeInMainWorld('api', {
       return { ok: false, error: { code: 'PATCH_FAILED', message: res?.error || 'Unknown error' } }
     },
   },
+  search: {
+    run: async (query, options) => {
+      const res = await ipcRenderer.invoke('search:run', { query, ...(options || {}) })
+      if (res?.success) return { ok: true, data: res.data }
+      return { ok: false, error: { code: 'SEARCH_FAILED', message: res?.error || 'Unknown error' } }
+    },
+  },
 })

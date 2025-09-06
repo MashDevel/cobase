@@ -7,6 +7,7 @@ import o200k_base from 'js-tiktoken/ranks/o200k_base'
 import { registerFs } from './plugins/fs/index.js'
 import { registerGit } from './plugins/git/index.js'
 import { registerPatch } from './plugins/patch/index.js'
+import { registerSearch } from './plugins/search/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -88,6 +89,7 @@ app.whenReady().then(() => {
   registerFs(ctx)
   registerGit(ctx)
   registerPatch(ctx)
+  registerSearch(ctx)
 })
 
 app.on('window-all-closed', () => {
@@ -97,4 +99,3 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
-
