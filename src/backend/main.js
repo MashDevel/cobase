@@ -62,16 +62,16 @@ function createWindow() {
   })
 
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:3000')
-    globalShortcut.register('F12', () => {
-      if (mainWindow) {
-        if (mainWindow.webContents.isDevToolsOpened()) {
-          mainWindow.webContents.closeDevTools()
-        } else {
-          mainWindow.webContents.openDevTools({ mode: 'detach' })
-        }
-      }
-    })
+    mainWindow.loadURL('http://localhost:3040')
+    // globalShortcut.register('F12', () => {
+    //   if (mainWindow) {
+    //     if (mainWindow.webContents.isDevToolsOpened()) {
+    //       mainWindow.webContents.closeDevTools()
+    //     } else {
+    //       mainWindow.webContents.openDevTools({ mode: 'detach' })
+    //     }
+    //   }
+    // })
   } else {
     mainWindow.loadURL(`file://${path.resolve(__dirname, '../../dist/index.html')}`)
   }

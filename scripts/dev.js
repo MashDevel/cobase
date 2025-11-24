@@ -25,7 +25,7 @@ vite.on('error', err => {
   exitHandler(1);
 });
 
-waitOn({ resources: ['http://localhost:3000'], timeout: 30000 }, err => {
+waitOn({ resources: ['http://localhost:3040'], timeout: 30000 }, err => {
   if (err) {
     console.error('❌ Vite did not start in time:', err);
     exitHandler(1);

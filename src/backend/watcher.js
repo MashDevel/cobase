@@ -16,15 +16,89 @@ export class FolderWatcher {
   constructor() {
     this.watcher = null;
     this.ignorer = ignore();
+    this.folderPath = '';
   }
 
   loadGitignore(folderPath) {
+    this.folderPath = folderPath;
+    this.ignorer = ignore();
+    this.ignorer.add(to_ignore);
     const gitignorePath = path.join(folderPath, '.gitignore');
     if (fs.existsSync(gitignorePath)) {
       const gitignoreContent = fs.readFileSync(gitignorePath, 'utf8');
-      this.ignorer = ignore().add(gitignoreContent);
-      this.ignorer.add(to_ignore);
+      this.ignorer.add(gitignoreContent);
     }
+    const nestedPatterns = this.collectNestedGitignorePatterns(folderPath);
+    if (nestedPatterns.length) {
+      this.ignorer.add(nestedPatterns);
+    }
+  }
+
+  collectNestedGitignorePatterns(folderPath) {
+    const patterns = [];
+    const stack = [folderPath];
+    while (stack.length) {
+      const dir = stack.pop();
+      let entries;
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === '.git' || entry.name === 'node_modules') {
+            continue;
+          }
+          stack.push(fullPath);
+        } else if (entry.isFile() && entry.name === '.gitignore' && dir !== folderPath) {
+          const relativeDir = path.relative(folderPath, dir);
+          if (!relativeDir) {
+            continue;
+          }
+          let scoped;
+          try {
+            scoped = this.scopeGitignore(fs.readFileSync(fullPath, 'utf8'), relativeDir);
+          } catch {
+            scoped = [];
+          }
+          if (scoped.length) {
+            patterns.push(...scoped);
+          }
+        }
+      }
+    }
+    return patterns;
+  }
+
+  scopeGitignore(content, relativeDir) {
+    const prefix = relativeDir.split(path.sep).join('/');
+    const lines = content.split(/\r?\n/);
+    const scoped = [];
+    for (const raw of lines) {
+      const trimmed = raw.trim();
+      if (!trimmed || trimmed.startsWith('#')) {
+        continue;
+      }
+      const negated = trimmed.startsWith('!');
+      const body = negated ? trimmed.slice(1) : trimmed;
+      const normalized = body.replace(/\\/g, '/');
+      if (!normalized) {
+        continue;
+      }
+      let pattern;
+      if (normalized.startsWith('/')) {
+        const target = normalized.slice(1);
+        pattern = target ? `${prefix}/${target}` : prefix;
+      } else if (normalized.includes('/')) {
+        pattern = `${prefix}/${normalized}`;
+      } else {
+        pattern = `${prefix}/**/${normalized}`;
+      }
+      scoped.push(negated ? `!${pattern}` : pattern);
+    }
+    return scoped;
   }
 
   async listFiles(folderPath) {
