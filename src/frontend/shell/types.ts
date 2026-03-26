@@ -14,8 +14,7 @@ export type PluginManifest = {
 
 export type PluginModule = {
   manifest: PluginManifest
-  Sidebar?: () => JSX.Element
-  Main: () => JSX.Element
+  Sidebar?: () => ReactNode
+  Main: () => ReactNode
   commands?: PluginCommand[]
 }
-

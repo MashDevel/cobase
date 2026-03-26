@@ -15,7 +15,7 @@ export default function TopBar() {
   useEffect(() => { if (open) { ga.loadBranches(); ga.refresh() } }, [open])
 
   return (
-    <div className="h-10 border-b bg-white dark:bg-neutral-900 flex items-center justify-between px-3 py-2 drag-region mx-2 titlebar-safe-left">
+    <div className="h-10 border-b bg-white dark:bg-neutral-900 flex items-center justify-between px-3 py-2 drag-region mx-2 titlebar-safe-left" data-tauri-drag-region>
       <div className="no-drag">
         <button
           onClick={selectFolder}

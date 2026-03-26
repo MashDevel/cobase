@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw
 
-input_image_path = "icons/icon.png"
-output_icns_path = "icons/icon.icns"
+input_image_path = "src/backend/icons/icon.png"
+output_icns_path = "src/backend/icons/icon.icns"
 
 def create_rounded_corners(image, radius):
     mask = Image.new('L', image.size, 0)

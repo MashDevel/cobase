@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X as XIcon, Copy as CopyIcon } from 'lucide-react'
 import { useNotify } from '../../../hooks/useNotify'
 import Notify from '../../../components/Notify'
+import { copyText } from '../../../clipboard'
 
 export default function Main() {
   const [patchText, setPatchText] = useState('')
@@ -21,7 +22,7 @@ export default function Main() {
 
   const handleCopyError = async () => {
     if (errorMessage) {
-      await navigator.clipboard.writeText(errorMessage)
+      await copyText(errorMessage)
       notify.notify('Error message copied')
     }
   }

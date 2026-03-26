@@ -1,10 +1,11 @@
 import Grid from './parts/Grid'
 import ExportBar from './parts/ExportBar'
 import { useEffect } from 'react'
-import useStore from '../store'
+import useStore, { setupListeners } from '../store'
 
 export default function Main() {
   useEffect(() => {
+    setupListeners()
     useStore.getState().initFromLastFolder()
   }, [])
   const folderPath = useStore(s => s.folderPath)

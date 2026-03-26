@@ -1,195 +1,117 @@
 # Cobase
 
-Cobase is an Electron-based desktop application for browsing and selecting files from a codebase, viewing their approximate token counts, and copying file contents (with optional file tree context) into a clipboard-formatted prompt. It also supports applying unified-style patches to the project files directly, streamlining workflows for AI-assisted code reviews and edits.
+Cobase is a desktop app for exploring a codebase, selecting files, estimating token usage, copying prompt-ready context, inspecting Git state, running project-wide search, and applying patch envelopes directly to the local workspace.
 
-## Table of Contents
-
-* [Features](#features)
-* [Getting Started](#getting-started)
-
-  * [Prerequisites](#prerequisites)
-  * [Installation](#installation)
-  * [Development](#development)
-  * [Production Build](#production-build)
-* [Usage](#usage)
-
-  * [Opening a Project Folder](#opening-a-project-folder)
-  * [Browsing and Searching Files](#browsing-and-searching-files)
-  * [Selecting Files and Viewing Token Counts](#selecting-files-and-viewing-token-counts)
-  * [Copying File Context](#copying-file-context)
-  * [Applying Patches](#applying-patches)
-* [Project Structure](#project-structure)
-* [Dependency Overview](#dependency-overview)
-* [Scripts](#scripts)
-* [Contributing](#contributing)
-* [License](#license)
+The app is built with Tauri 2, a Rust backend, and a React + Vite frontend.
 
 ## Features
 
-* **File Explorer**: Displays a tree view of your project files (ignoring patterns from `.gitignore`) with collapsible directories.
-* **Token Counting**: Estimates token counts per file using `js-tiktoken`, helpful for crafting prompts within model limits.
-* **Search & Filter**: Quickly search by filename to narrow down files in large repositories.
-* **Select & Copy**: Select individual files or entire directories, include an ASCII file tree if desired, and copy concatenated contents into clipboard ready for prompt composition.
-* **Prompt Templates**: Choose between a blank template, question template, or patch template when copying files.
-* **Apply Patch**: Paste a unified-style patch into the built‑in modal to apply changes directly to your codebase using an intelligent context-based parser.
-* **Dark Mode & Theming**: Toggle between light and dark themes with a single click.
+* Browse a project tree while respecting `.gitignore`, `.git/info/exclude`, and global Git ignore rules
+* Estimate tokens and line counts for files and selected groups
+* Copy selected files with optional instructions and prompt templates
+* Include file tree context in copied output
+* Apply `*** Begin Patch` / `*** End Patch` patches directly in the app
+* Inspect Git status, diffs, history, blame, branches, and commit details
+* Copy working tree diffs and commit patches
+* Search across the project with regex and result limits
+* Toggle between light and dark themes
+
+## Stack
+
+* Tauri 2
+* Rust
+* React 18
+* Vite
+* TypeScript
+* Zustand
 
 ## Getting Started
 
 ### Prerequisites
 
-* [Node.js](https://nodejs.org/) (v16.x or higher)
-* npm (v8.x or higher) or yarn
+* Node.js
+* npm
+* Rust toolchain
+* Platform requirements for Tauri builds
 
-### Installation
+On macOS, that typically means Xcode Command Line Tools are installed. On Linux and Windows, install the system dependencies required by Tauri 2 for your target platform.
 
-1. **Clone the repository**
+### Install
 
-   ```bash
-   git clone https://github.com/your-org/cobase.git
-   cd cobase
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+```bash
+npm install
+```
 
 ### Development
 
-Start the development environment, which launches a Vite server and then Electron in development mode:
-
 ```bash
 npm run start
-# or
-yarn start
 ```
 
-* Runs `scripts/dev.js`:
+This runs:
 
-  * Spawns the Vite dev server on [http://localhost:3000](http://localhost:3000).
-  * Waits until it’s ready, then launches Electron pointing at the dev server.
-  * Hot-reloads frontend on file changes; backend logs appear prefixed with `[electron]`.
+* `tauri dev --config src/backend/tauri.conf.json`
+* Vite on `http://localhost:3040`
+* The desktop app against that dev server
 
 ### Production Build
 
-To build for production and package the Electron app:
-
 ```bash
 npm run build
-# or
-yarn build
 ```
 
-* Runs `scripts/build.js`:
+This runs:
 
-  1. Builds the frontend dist via Vite.
-  2. Packages the Electron app with `electron-builder` (outputs in `release-builds/`).
+* `tauri build --config src/backend/tauri.conf.json`
+* `vite build` via Tauri's `beforeBuildCommand`
+* Native app packaging through Tauri
 
-To clean build artifacts:
+Build outputs are written under:
+
+```text
+src/backend/target/release/bundle/
+```
+
+### Clean
 
 ```bash
 npm run clean
 ```
 
+This removes:
+
+```text
+dist/
+src/backend/target/
+```
+
 ## Usage
 
-### Opening a Project Folder
+### Explorer
 
-1. Click **Open Folder** in the header and select a directory.
-2. The last opened folder is remembered and auto-loaded on next launch.
+Open a folder to load the project tree. Cobase tracks file selection, estimates tokens and lines, and lets you copy prompt-ready file contents with optional instructions and file tree context.
 
-### Browsing and Searching Files
+### Git
 
-* Use the sidebar to browse files grouped by directory.
-* Search by filename in the sidebar search box to filter visible files in real time.
+The Git view surfaces working tree status and supports diff inspection, stage and unstage actions, discard, commit, branch switching and creation, history browsing, blame, commit patch copying, and range-based prompt generation.
 
-### Selecting Files and Viewing Token Counts
+### Search
 
-* Each file entry shows an estimated token count (approximate word count via `js-tiktoken`).
-* Select individual files or entire folders (checkbox on folder toggles all nested files).
-* The header of the grid view displays total selected files and cumulative token count.
+The Search view runs project-wide text search with regex, case sensitivity, whole-word matching, per-file limits, and max result limits.
 
-### Copying File Context
+### Patches
 
-1. Select files in the sidebar.
-2. In the export bar at the bottom:
+The Patches view accepts patch envelopes in the `*** Begin Patch` format and applies them directly to the currently opened project.
 
-   * (Optional) Enter additional instructions.
-   * Choose **Include File Tree** to prepend an ASCII tree of selected files.
-   * Select a **Prompt Template**: Blank, Question, or Patch.
-3. Click **Copy (N files)** to copy to clipboard:
+### Settings
 
-   * Combines file contents and tree header (if chosen).
-   * Appends template guidelines and your instructions.
-
-### Applying Patches
-
-1. Click **Apply Patch** in the header.
-2. Paste a unified patch (`*** Begin Patch` ... `*** End Patch`).
-3. Click **Apply** to run the parser (`applyPatch` handler):
-
-   * Applies changes with robust context matching.
-   * Errors (invalid context, missing files) are shown inline and can be copied.
-
-## Project Structure
-
-```
-/ (root)
-├─ package.json           # Project manifest & scripts
-├─ .gitignore             # Ignored files
-├─ index.html             # App entrypoint for Vite + Electron
-├─ scripts/
-│  ├─ dev.js              # Starts Vite + Electron for dev
-│  └─ build.js            # Builds frontend then packages Electron
-├─ src/
-│  ├─ backend/
-│  │  ├─ main.js          # Electron main process
-│  │  ├─ preload.js       # Exposes safe IPC methods
-│  │  ├─ applyPatch.js    # Patch parser & applier logic
-│  │  ├─ parseApplyPatch.js
-│  │  ├─ prompts.js       # Prompt templates for copy & patch
-│  │  └─ watcher.js       # File watcher respecting .gitignore
-│  └─ frontend/
-│     ├─ main.tsx         # React entrypoint
-│     ├─ index.css        # Tailwind base styles
-│     ├─ hooks/           # Custom React hooks (useNotify, useResizable)
-│     ├─ components/      # Shared UI pieces (ThemeToggle, Notify)
-│     ├─ shell/           # Shell app frame, state, and registry
-│     │  ├─ ShellApp.tsx  # Root UI layout (left rail, top bar, panes)
-│     │  ├─ store.ts      # Shell-level Zustand state
-│     │  ├─ registry.tsx  # Plugin registration and commands
-│     │  ├─ LeftRail.tsx  # Plugin launcher rail
-│     │  ├─ TopBar.tsx    # Global actions (palette, folder)
-│     │  └─ CommandPalette.tsx
-│     └─ plugins/         # Feature plugins mounted by the shell
-│        ├─ explorer/     # File explorer + selection and export
-│        ├─ git/          # Git actions (copy diff)
-│        ├─ patches/      # Apply patch UI
-│        ├─ search/       # Search (WIP)
-│        └─ settings/     # Appearance and app settings
-└─ tsconfig.json          # TypeScript configuration
-```
-
-## Dependency Overview
-
-* **Electron**: Desktop shell for cross-platform apps
-* **Vite**: Fast front-end build tool (with React plugin)
-* **React**: UI library
-* **Zustand**: Lightweight state management
-* **Tailwind CSS**: Utility-first styling
-* **js-tiktoken**: Tokenizer to estimate token counts
-* **chokidar**: File system watcher
-* **ignore**: Respect .gitignore patterns
-* **electron-builder**: Packaging for Windows/macOS/Linux
+The Settings view currently exposes theme switching.
 
 ## Scripts
 
-| Command         | Description                                                |
-| --------------- | ---------------------------------------------------------- |
-| `npm run start` | Launch dev server + Electron in development                |
-| `npm run build` | Build frontend and package Electron app                    |
-| `npm run clean` | Remove generated `dist/` and `release-builds/` directories |
+| Command | Description |
+| ------- | ----------- |
+| `npm run start` | Start the Tauri development app |
+| `npm run build` | Build and package the production app |
+| `npm run build:web` | Build the frontend only with Vite |
+| `npm run clean` | Remove `dist/` and `src/backend/target/` |

@@ -3,3 +3,5 @@
 /dist
 /release-builds
 .icons/
+/src/backend/target
+/src/backend/gen

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { buildAsciiTree } from './services/tree'
+import { copyText } from '../../clipboard'
 
 const uuidv4 = () => crypto.randomUUID()
 
@@ -131,7 +132,7 @@ const useExplorerStore = create<ExplorerState>((set, get) => ({
     if (!folderPath || files.length === 0) return { success: false, error: 'Nothing to copy' }
     try {
       const text = buildAsciiTree(files, folderPath)
-      await navigator.clipboard.writeText(text)
+      await copyText(text)
       return { success: true }
     } catch (e: any) {
       return { success: false, error: e?.message ?? 'Clipboard write failed' }
@@ -145,7 +146,7 @@ const useExplorerStore = create<ExplorerState>((set, get) => ({
 }))
 
 let listenersSetup = false
-const setupListeners = () => {
+export const setupListeners = () => {
   if (listenersSetup) return
   listenersSetup = true
   const { handleInitialFiles, handleFileAdded, handleFileChanged, handleFileRemoved } = useExplorerStore.getState()
@@ -154,8 +155,6 @@ const setupListeners = () => {
   window.api.fs.onFileChanged(handleFileChanged)
   window.api.fs.onFileRemoved(handleFileRemoved)
 }
-
-setupListeners()
 
 export default useExplorerStore
 

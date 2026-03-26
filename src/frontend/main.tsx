@@ -1,6 +1,9 @@
 import ReactDOM from 'react-dom/client';
 import ShellApp from './shell/ShellApp';
+import { installApi } from './api';
 import './index.css';
+
+installApi();
 
 const saved = localStorage.getItem('theme');
 const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
