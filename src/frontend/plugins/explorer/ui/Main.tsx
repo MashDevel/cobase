@@ -5,8 +5,7 @@ import useStore, { setupListeners } from '../store'
 
 export default function Main() {
   useEffect(() => {
-    setupListeners()
-    useStore.getState().initFromLastFolder()
+    void setupListeners().then(() => useStore.getState().initFromLastFolder())
   }, [])
   const folderPath = useStore(s => s.folderPath)
   const selectFolder = useStore(s => s.selectFolder)

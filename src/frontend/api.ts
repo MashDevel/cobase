@@ -6,6 +6,9 @@ import { open } from '@tauri-apps/plugin-dialog'
 type ApiError = { code: string; message: string }
 type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 type FilePayload = { fullPath: string; name: string; tokens?: number; lines?: number }
+type TextFilePayload = { path: string; content: string }
+type TerminalDataPayload = { sessionId: string; data: string }
+type TerminalExitPayload = { sessionId: string; code?: number | null }
 
 const ok = <T>(data: T): ApiResult<T> => ({ ok: true, data })
 const err = <T>(code: string, message: string): ApiResult<T> => ({ ok: false, error: { code, message } })
@@ -19,15 +22,13 @@ async function run<T>(command: string, args: Record<string, unknown>, code: stri
   }
 }
 
-function onEvent<T>(event: string, cb: (payload: T) => void) {
+async function onEvent<T>(event: string, cb: (payload: T) => void) {
   let dispose: null | (() => void) = null
-  listen<T>(event, (evt) => cb(evt.payload))
-    .then((unlisten) => {
-      dispose = unlisten
-    })
-    .catch((error) => {
-      console.error(`Failed to subscribe to ${event}`, error)
-    })
+  try {
+    dispose = await listen<T>(event, (evt) => cb(evt.payload))
+  } catch (error) {
+    console.error(`Failed to subscribe to ${event}`, error)
+  }
   return () => {
     if (dispose) dispose()
   }
@@ -36,6 +37,7 @@ function onEvent<T>(event: string, cb: (payload: T) => void) {
 export function installApi() {
   window.api = {
     fs: {
+      getOpenedFolder: async () => run<string | null>('get_opened_folder', {}, 'OPEN_FAILED'),
       selectFolder: async () => {
         try {
           const selected = await open({ directory: true, multiple: false })
@@ -52,6 +54,14 @@ export function installApi() {
       openFolderDirect: async (path) => run<string>('open_folder', { path }, 'OPEN_FAILED'),
       estimateTokens: async (path) => run<number>('estimate_tokens', { path }, 'ESTIMATE_TOKENS_FAILED'),
       estimateLines: async (path) => run<number>('estimate_lines', { path }, 'ESTIMATE_LINES_FAILED'),
+      readTextFile: async (path) => run<TextFilePayload>('read_text_file', { path }, 'READ_FILE_FAILED'),
+      writeTextFile: async (path, content) => run<TextFilePayload>('write_text_file', { path, content }, 'WRITE_FILE_FAILED'),
+      revealPathInSystem: async (path) => run<true>('reveal_path_in_system', { path }, 'REVEAL_PATH_FAILED'),
+      openPathInSystem: async (path) => run<true>('open_path_in_system', { path }, 'OPEN_PATH_FAILED'),
+      renamePath: async (path, newName) => run<{ path: string }>('rename_path', { path, newName }, 'RENAME_PATH_FAILED'),
+      deletePath: async (path) => run<true>('delete_path', { path }, 'DELETE_PATH_FAILED'),
+      copyPathTo: async (path, destinationDir) => run<{ path: string }>('copy_path_to', { path, destinationDir }, 'COPY_PATH_FAILED'),
+      movePathTo: async (path, destinationDir) => run<{ path: string }>('move_path_to', { path, destinationDir }, 'MOVE_PATH_FAILED'),
       onFilesInitial: (cb) => onEvent<FilePayload[]>('files:initial', cb),
       onFileAdded: (cb) => onEvent<string>('file-added', cb),
       onFileChanged: (cb) => onEvent<string>('file-changed', cb),
@@ -129,6 +139,14 @@ export function installApi() {
     },
     search: {
       run: async (query, options) => run('search_run', { payload: { query, ...(options || {}) } }, 'SEARCH_FAILED'),
+    },
+    terminal: {
+      start: async (cwd) => run<string>('terminal_start', { cwd }, 'TERMINAL_START_FAILED'),
+      write: async (sessionId, data) => run<true>('terminal_write', { sessionId, data }, 'TERMINAL_WRITE_FAILED'),
+      resize: async (sessionId, cols, rows) => run<true>('terminal_resize', { sessionId, cols, rows }, 'TERMINAL_RESIZE_FAILED'),
+      close: async (sessionId) => run<true>('terminal_close', { sessionId }, 'TERMINAL_CLOSE_FAILED'),
+      onData: (cb) => onEvent<TerminalDataPayload>('terminal:data', cb),
+      onExit: (cb) => onEvent<TerminalExitPayload>('terminal:exit', cb),
     },
   }
 }

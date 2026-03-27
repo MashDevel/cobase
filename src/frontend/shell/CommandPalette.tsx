@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import useShellStore from './store'
 import type { PluginCommand } from './types'
 import { getAllCommands } from '../shell/registry'
@@ -7,13 +7,16 @@ export default function CommandPalette() {
   const open = useShellStore(s => s.paletteOpen)
   const setOpen = useShellStore(s => s.setPaletteOpen)
   const [query, setQuery] = useState('')
+  const [commands, setCommands] = useState<PluginCommand[]>([])
+  const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const commands = useMemo<PluginCommand[]>(() => (open ? getAllCommands() : []), [open])
+  const deferredQuery = useDeferredValue(query)
+
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = deferredQuery.trim().toLowerCase()
     if (!q) return commands
     return commands.filter(c => c.title.toLowerCase().includes(q))
-  }, [commands, query])
+  }, [commands, deferredQuery])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -28,10 +31,21 @@ export default function CommandPalette() {
   }, [open, setOpen])
 
   useEffect(() => {
+    let cancelled = false
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 0)
+      requestAnimationFrame(() => inputRef.current?.focus())
+      setLoading(true)
+      void getAllCommands().then((nextCommands) => {
+        if (cancelled) return
+        setCommands(nextCommands)
+        setLoading(false)
+      })
     } else {
       setQuery('')
+      setLoading(false)
+    }
+    return () => {
+      cancelled = true
     }
   }, [open])
 
@@ -50,6 +64,9 @@ export default function CommandPalette() {
           />
         </div>
         <div className="max-h-80 overflow-auto">
+          {loading && commands.length === 0 && (
+            <div className="px-4 py-6 text-neutral-500 dark:text-neutral-400">Loading commands</div>
+          )}
           {filtered.map(cmd => (
             <button
               key={cmd.id}
@@ -62,7 +79,7 @@ export default function CommandPalette() {
               {cmd.title}
             </button>
           ))}
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div className="px-4 py-6 text-neutral-500 dark:text-neutral-400">No commands</div>
           )}
         </div>

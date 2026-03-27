@@ -1,6 +1,18 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+html,
+body,
+#root {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+html {
+    background-color: #171717;
+}
+
 .drag-region {
     -webkit-app-region: drag;
 }
@@ -10,5 +22,29 @@
 }
 
 .darwin .titlebar-safe-left {
-    padding-left: 22px;
+    padding-left: 30px;
+}
+
+.code-editor-input::selection {
+    background: var(--code-editor-selection);
+}
+
+.code-editor-caret {
+    border-radius: 1px;
+    animation: code-editor-caret-blink 1.05s steps(1) infinite;
+}
+
+@keyframes code-editor-caret-blink {
+    0% {
+        opacity: 1;
+    }
+    55% {
+        opacity: 1;
+    }
+    56% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
 }

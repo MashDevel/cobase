@@ -1,8 +1,10 @@
+import { lazy } from 'react'
 import { FolderOpen } from 'lucide-react'
 import type { PluginModule } from '../../shell/types'
-import ExplorerSidebar from './ui/Sidebar'
-import ExplorerMain from './ui/Main'
 import { getActions } from './store'
+
+const ExplorerSidebar = lazy(() => import('./ui/Sidebar'))
+const ExplorerMain = lazy(() => import('./ui/Main'))
 
 const ExplorerPlugin: PluginModule = {
   manifest: {
@@ -33,4 +35,3 @@ const ExplorerPlugin: PluginModule = {
 }
 
 export default ExplorerPlugin
-

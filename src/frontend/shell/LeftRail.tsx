@@ -1,5 +1,6 @@
+import { startTransition } from 'react'
 import useShellStore from './store'
-import { plugins } from './registry'
+import { plugins, preloadPlugin } from './registry'
 
 export default function LeftRail() {
   const active = useShellStore(s => s.activePluginId)
@@ -14,7 +15,12 @@ export default function LeftRail() {
           <button
             key={p.manifest.id}
             className={`w-9 h-9 rounded flex items-center justify-center text-neutral-700 dark:text-neutral-200 ${active === p.manifest.id ? 'bg-neutral-200 dark:bg-neutral-700' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
-            onClick={() => setActive(p.manifest.id)}
+            onClick={() => {
+              preloadPlugin(p.manifest.id)
+              startTransition(() => setActive(p.manifest.id))
+            }}
+            onMouseEnter={() => preloadPlugin(p.manifest.id)}
+            onFocus={() => preloadPlugin(p.manifest.id)}
             aria-label={p.manifest.title}
             title={p.manifest.title}
           >
@@ -29,7 +35,12 @@ export default function LeftRail() {
             <button
               key={settings.manifest.id}
               className={`w-9 h-9 rounded flex items-center justify-center text-neutral-700 dark:text-neutral-200 ${active === settings.manifest.id ? 'bg-neutral-200 dark:bg-neutral-700' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
-              onClick={() => setActive(settings.manifest.id)}
+              onClick={() => {
+                preloadPlugin(settings.manifest.id)
+                startTransition(() => setActive(settings.manifest.id))
+              }}
+              onMouseEnter={() => preloadPlugin(settings.manifest.id)}
+              onFocus={() => preloadPlugin(settings.manifest.id)}
               aria-label={settings.manifest.title}
               title={settings.manifest.title}
             >

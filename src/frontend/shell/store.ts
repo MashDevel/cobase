@@ -12,7 +12,7 @@ type ShellState = {
 }
 
 const useShellStore = create<ShellState>((set) => ({
-  activePluginId: 'explorer',
+  activePluginId: 'editor',
   setActivePluginId: (id) => set({ activePluginId: id }),
   paletteOpen: false,
   setPaletteOpen: (v) => set({ paletteOpen: v }),
@@ -23,4 +23,3 @@ const useShellStore = create<ShellState>((set) => ({
 }))
 
 export default useShellStore
-

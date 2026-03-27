@@ -2,8 +2,9 @@ import useStore from '../store'
 import Directory from './parts/Directory'
 import { buildTree } from '../services/tree'
 import FileItem from './parts/FileItem'
+import ContextMenu, { type ContextMenuTarget } from './parts/ContextMenu'
 import { Search, X, Copy } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import useResizable from '../../../hooks/useResizable'
 import { useNotify } from '../../../hooks/useNotify'
 import Notify from '../../../components/Notify'
@@ -22,6 +23,20 @@ export default function Sidebar() {
   const filteredFiles = useMemo(() => files.filter(f => f.name.toLowerCase().includes(search.toLowerCase())), [files, search])
   const tree = useMemo(() => (folderPath ? buildTree(filteredFiles, folderPath) : null), [filteredFiles, folderPath])
   const notify = useNotify()
+  const [menu, setMenu] = useState<ContextMenuTarget | null>(null)
+
+  useEffect(() => {
+    const onPointer = () => setMenu(null)
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenu(null)
+    }
+    window.addEventListener('pointerdown', onPointer)
+    window.addEventListener('keydown', onEscape)
+    return () => {
+      window.removeEventListener('pointerdown', onPointer)
+      window.removeEventListener('keydown', onEscape)
+    }
+  }, [])
 
   return (
     <aside ref={asideRef} className="border-r bg-white dark:bg-neutral-800 flex flex-col relative shrink-0 min-h-0 h-full" style={sizeStyle}>
@@ -63,10 +78,32 @@ export default function Sidebar() {
             {tree && (tree.children.length || tree.files.length) ? (
               <>
                 {tree.children.map(child => (
-                  <Directory key={child.name} node={child} selected={selected} toggleSelected={toggleSelected} expandAll={Boolean(search)} />
+                  <Directory
+                    key={child.name}
+                    node={child}
+                    path={folderPath}
+                    selected={selected}
+                    toggleSelected={toggleSelected}
+                    expandAll={Boolean(search)}
+                    onContextMenu={(target, event) => {
+                      event.preventDefault()
+                      window.getSelection()?.removeAllRanges()
+                      setMenu({ ...target, x: event.clientX, y: event.clientY })
+                    }}
+                  />
                 ))}
                 {tree.files.map(f => (
-                  <FileItem key={f.id} file={f} selected={selected.has(f.id)} toggleSelected={() => toggleSelected(f.id)} />
+                  <FileItem
+                    key={f.id}
+                    file={f}
+                    selected={selected.has(f.id)}
+                    toggleSelected={() => toggleSelected(f.id)}
+                    onContextMenu={(event) => {
+                      event.preventDefault()
+                      window.getSelection()?.removeAllRanges()
+                      setMenu({ kind: 'file', path: f.fullPath, name: f.name, x: event.clientX, y: event.clientY })
+                    }}
+                  />
                 ))}
               </>
             ) : (
@@ -76,6 +113,7 @@ export default function Sidebar() {
           <div className="absolute top-0 right-0 h-full w-1 cursor-col-resize no-drag" onMouseDown={handleProps.onMouseDown}>
             <div className="w-full h-full bg-transparent hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40" />
           </div>
+          {menu ? <ContextMenu target={menu} onClose={() => setMenu(null)} notify={notify.notify} /> : null}
           {notify.message && <Notify message={notify.message} />}
         </>
       )}

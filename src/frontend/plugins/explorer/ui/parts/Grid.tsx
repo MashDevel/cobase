@@ -3,13 +3,17 @@ import useStore from '../../store'
 import type { FileEntry } from '../../store'
 import { X as XIcon } from 'lucide-react'
 import { selectSelectedFiles, selectSelectedTotalTokens, selectSelectedTotalLines } from '../../selectors'
+import { openEditorFile } from '../../../editor/store'
 
 type GridItemProps = { f: FileEntry; onRemove: (id: string) => void }
 
 const GridItem = ({ f, onRemove }: GridItemProps) => {
   return (
-    <div className="relative group border border-sky-800 rounded p-4 bg-white dark:bg-neutral-800 shadow-sm hover:bg-neutral-200 dark:hover:bg-neutral-700">
-      <button onClick={() => onRemove(f.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" aria-label={`Remove ${f.name}`}>
+    <div
+      className="relative group border border-sky-800 rounded p-4 bg-white dark:bg-neutral-800 shadow-sm hover:bg-neutral-200 dark:hover:bg-neutral-700 cursor-pointer"
+      onClick={() => void openEditorFile(f.fullPath)}
+    >
+      <button onClick={(event) => { event.stopPropagation(); onRemove(f.id) }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" aria-label={`Remove ${f.name}`}>
         <XIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-300" />
       </button>
       <div className="font-mono text-sm truncate text-neutral-900 dark:text-neutral-100 flex items-center">{f.name}</div>

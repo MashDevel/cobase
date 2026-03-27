@@ -1,6 +1,8 @@
+import { lazy } from 'react'
 import { FileDiff } from 'lucide-react'
 import type { PluginModule } from '../../shell/types'
-import PatchesMain from './ui/Main'
+
+const PatchesMain = lazy(() => import('./ui/Main'))
 
 const PatchesPlugin: PluginModule = {
   manifest: {
@@ -15,4 +17,3 @@ const PatchesPlugin: PluginModule = {
 }
 
 export default PatchesPlugin
-

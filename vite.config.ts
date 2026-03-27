@@ -13,6 +13,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@xterm')) return 'xterm'
+          if (id.includes('react') || id.includes('react-dom')) return 'react-vendor'
+          if (id.includes('zustand')) return 'state'
+          if (id.includes('lucide-react')) return 'icons'
+          return 'vendor'
+        },
+      },
       input: {
         main: resolve(__dirname, 'index.html'),
       },

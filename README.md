@@ -62,9 +62,9 @@ npm run build
 
 This runs:
 
-* `tauri build --config src/backend/tauri.conf.json`
+* `tauri build --bundles app --config src/backend/tauri.conf.json`
 * `vite build` via Tauri's `beforeBuildCommand`
-* Native app packaging through Tauri
+* Native `.app` bundling through Tauri
 
 Build outputs are written under:
 
@@ -112,6 +112,6 @@ The Settings view currently exposes theme switching.
 | Command | Description |
 | ------- | ----------- |
 | `npm run start` | Start the Tauri development app |
-| `npm run build` | Build and package the production app |
+| `npm run build` | Build the production `.app` bundle |
 | `npm run build:web` | Build the frontend only with Vite |
 | `npm run clean` | Remove `dist/` and `src/backend/target/` |

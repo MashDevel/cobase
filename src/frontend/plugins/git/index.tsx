@@ -1,6 +1,8 @@
+import { lazy } from 'react'
 import { GitBranch } from 'lucide-react'
 import type { PluginModule } from '../../shell/types'
-import GitMain from './ui/Main'
+
+const GitMain = lazy(() => import('./ui/Main'))
 
 const GitPlugin: PluginModule = {
   manifest: {
